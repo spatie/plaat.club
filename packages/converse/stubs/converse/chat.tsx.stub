@@ -1,0 +1,284 @@
+import { Form, InfiniteScroll } from '@inertiajs/react';
+import {
+    Chat,
+    promptAttribute,
+    renderStreamingMarkdown,
+    type ChatPayload,
+} from '@laravel/converse-react';
+
+export default function ChatPage({ chat }: { chat: ChatPayload }) {
+    return (
+        <Chat chat={chat}>
+            {({
+                messages,
+                status,
+                streaming,
+                error,
+                can,
+                approve,
+                reject,
+                cancel,
+                retry,
+                clearError,
+                composer,
+                isAwaitingContent,
+                infiniteScrollProps,
+            }) => (
+                <div className="flex min-h-0 grow basis-0 flex-col">
+                    <div className="mx-auto w-full max-w-3xl px-4">
+                        <header className="flex items-center gap-3 border-b border-neutral-200 py-3 text-xs text-neutral-500 dark:border-neutral-800">
+                            <span>{status}</span>
+                            <Form
+                                action="/chat/new"
+                                method="post"
+                                options={{ reset: ['chat.messages'] }}
+                                className="ml-auto"
+                            >
+                                <button type="submit" className="underline">
+                                    New conversation
+                                </button>
+                            </Form>
+                        </header>
+                    </div>
+
+                    <div
+                        ref={composer.container}
+                        className="min-h-0 flex-1 scroll-pt-6 overflow-y-auto"
+                    >
+                        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-6 px-4 py-6">
+                            {messages.length === 0 && (
+                                <p className="my-auto text-center text-sm text-neutral-400">
+                                    Send a message to get started.
+                                </p>
+                            )}
+
+                            <div>
+                                <InfiniteScroll
+                                    {...infiniteScrollProps!}
+                                    className="flex flex-col gap-6"
+                                    loading={
+                                        <div className="pointer-events-none sticky top-0 flex h-0 justify-center">
+                                            <p className="mt-1 h-fit rounded-full bg-neutral-100 px-3 py-1 text-xs text-neutral-500 dark:bg-neutral-800">
+                                                Loading older messages…
+                                            </p>
+                                        </div>
+                                    }
+                                >
+                                    {messages.map((message) => (
+                                        <article
+                                            key={message.id}
+                                            className={
+                                                message.role === 'user'
+                                                    ? 'flex justify-end'
+                                                    : 'flex'
+                                            }
+                                        >
+                                            {message.role === 'user' ? (
+                                                <div
+                                                    {...{
+                                                        [promptAttribute]: '',
+                                                    }}
+                                                    className="max-w-[85%] rounded-2xl bg-neutral-900 px-4 py-2 text-sm whitespace-pre-wrap text-white dark:bg-neutral-100 dark:text-neutral-900"
+                                                >
+                                                    {message.content}
+                                                </div>
+                                            ) : (
+                                                <div className="min-w-0 flex-1 space-y-3 text-sm">
+                                                    {isAwaitingContent(
+                                                        message,
+                                                    ) && (
+                                                        <p className="text-neutral-500">
+                                                            Thinking…
+                                                        </p>
+                                                    )}
+
+                                                    {message.parts.map(
+                                                        (part, index) => {
+                                                            if (
+                                                                part.type ===
+                                                                    'text' &&
+                                                                part.text
+                                                            ) {
+                                                                return (
+                                                                    <div
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="space-y-2 leading-relaxed [&_a]:underline [&_code]:rounded [&_code]:bg-neutral-100 [&_code]:px-1 dark:[&_code]:bg-neutral-800 [&_h1]:font-semibold [&_h2]:font-semibold [&_h3]:font-semibold [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-neutral-100 [&_pre]:p-3 dark:[&_pre]:bg-neutral-800 [&_ul]:list-disc [&_ul]:pl-5"
+                                                                        dangerouslySetInnerHTML={{
+                                                                            __html: renderStreamingMarkdown(
+                                                                                part.text,
+                                                                            ),
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            }
+
+                                                            if (
+                                                                part.type ===
+                                                                'dynamic-tool'
+                                                            ) {
+                                                                return (
+                                                                    <div
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs dark:border-neutral-800"
+                                                                    >
+                                                                        {
+                                                                            part.toolName
+                                                                        }
+                                                                        :{' '}
+                                                                        {
+                                                                            part.state
+                                                                        }
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            return null;
+                                                        },
+                                                    )}
+
+                                                    {can.approve &&
+                                                        message.approvals
+                                                            .length > 0 && (
+                                                            <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+                                                                {message.approvals.map(
+                                                                    (
+                                                                        approval,
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                approval.id
+                                                                            }
+                                                                            className="space-y-2"
+                                                                        >
+                                                                            <p className="font-medium">
+                                                                                {
+                                                                                    approval.tool
+                                                                                }{' '}
+                                                                                needs
+                                                                                approval
+                                                                            </p>
+                                                                            {approval.reason && (
+                                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                                                    {
+                                                                                        approval.reason
+                                                                                    }
+                                                                                </p>
+                                                                            )}
+                                                                            <div className="flex gap-2">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="rounded-md bg-neutral-900 px-3 py-1 text-xs text-white disabled:opacity-50"
+                                                                                    disabled={
+                                                                                        streaming
+                                                                                    }
+                                                                                    onClick={() =>
+                                                                                        approve(
+                                                                                            approval.id,
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    Approve
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="rounded-md border border-neutral-300 px-3 py-1 text-xs disabled:opacity-50"
+                                                                                    disabled={
+                                                                                        streaming
+                                                                                    }
+                                                                                    onClick={() =>
+                                                                                        reject(
+                                                                                            approval.id,
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    Reject
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ),
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                    {message.error && (
+                                                        <p className="text-xs text-red-600">
+                                                            {message.error}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </article>
+                                    ))}
+                                </InfiniteScroll>
+                            </div>
+
+                            <div style={composer.spacerStyle} />
+                        </div>
+                    </div>
+
+                    <footer className="mx-auto w-full max-w-3xl px-4">
+                        {error && (
+                            <p className="mb-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+                                {error}
+                                {can.retry && (
+                                    <button
+                                        type="button"
+                                        className="ml-2 underline"
+                                        onClick={() => retry()}
+                                    >
+                                        Retry
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    className="ml-2 underline"
+                                    onClick={() => clearError()}
+                                >
+                                    Dismiss
+                                </button>
+                            </p>
+                        )}
+
+                        <form
+                            className="flex gap-2 border-t border-neutral-200 py-3 dark:border-neutral-800"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                composer.submit();
+                            }}
+                        >
+                            <input
+                                value={composer.draft}
+                                onChange={(event) =>
+                                    composer.setDraft(event.target.value)
+                                }
+                                className="flex-1 rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-sm dark:border-neutral-700"
+                                placeholder="Message"
+                            />
+
+                            {streaming ? (
+                                <button
+                                    type="button"
+                                    className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
+                                    onClick={() => cancel()}
+                                >
+                                    Stop
+                                </button>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
+                                >
+                                    Send
+                                </button>
+                            )}
+                        </form>
+                    </footer>
+                </div>
+            )}
+        </Chat>
+    );
+}

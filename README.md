@@ -92,7 +92,12 @@ The agent uses `SearchCollections`, `ReadRecordLists` and proposal-only `Propose
 
 Every write first produces a proposal. Reply with its exact `confirm <code>` in the same conversation within ten minutes, or `cancel`. Another question cancels the proposal. Confirmation rechecks ownership, selected records and whether the list changed since the preview; it does not ask OpenAI again. New lists are private unless an audience was explicitly requested. Deleting a list never deletes collection records.
 
-Converse is currently a private, unreleased dependency. Composer and build environments need GitHub credentials with read access to `laravel/converse`, supplied through Composer authentication, never committed. Composer installs its pinned source checkout because its distribution archive excludes the frontend packages. Vite and TypeScript resolve the official React and core packages from that checkout until NPM releases are available. Install Composer dependencies before building the frontend.
+Converse is currently private and unreleased, so its unchanged runtime source is bundled in
+`packages/converse` under its original MIT license. Composer installs `laravel/converse` from
+that local path without private GitHub credentials, preserving the `Laravel\Converse` namespace
+and package discovery. The snapshot includes its frontend packages, which Vite and TypeScript
+still resolve through `vendor/laravel/converse`. Install Composer dependencies before building
+the frontend. See `packages/converse/README.md` for provenance and the switch back to a public release.
 
 Conversations are private to their owner, pruned after 60 inactive days, and removed when the account is deleted. The feature is disabled by default.
 

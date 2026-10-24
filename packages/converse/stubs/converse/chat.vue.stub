@@ -1,0 +1,251 @@
+<script setup lang="ts">
+import { Form, InfiniteScroll } from '@inertiajs/vue3';
+import {
+    Chat,
+    promptAttribute,
+    renderStreamingMarkdown,
+    type ChatPayload,
+} from '@laravel/converse-vue';
+
+defineProps<{ chat: ChatPayload }>();
+</script>
+
+<template>
+    <Chat
+        :chat
+        v-slot="{
+            messages,
+            status,
+            streaming,
+            error,
+            can,
+            approve,
+            reject,
+            cancel,
+            retry,
+            clearError,
+            composer,
+            isAwaitingContent,
+            infiniteScrollProps,
+        }"
+    >
+        <div
+            class="flex min-h-0 grow basis-0 flex-col"
+        >
+            <div class="mx-auto w-full max-w-3xl px-4">
+                <header
+                    class="flex items-center gap-3 border-b border-neutral-200 py-3 text-xs text-neutral-500 dark:border-neutral-800"
+                >
+                    <span>{{ status }}</span>
+                    <Form
+                        action="/chat/new"
+                        method="post"
+                        :options="{ reset: ['chat.messages'] }"
+                        class="ml-auto"
+                    >
+                        <button type="submit" class="underline">
+                            New conversation
+                        </button>
+                    </Form>
+                </header>
+            </div>
+
+            <div
+                :ref="composer.container"
+                class="min-h-0 flex-1 scroll-pt-6 overflow-y-auto"
+            >
+                <div
+                    class="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-6 px-4 py-6"
+                >
+                    <p
+                        v-if="!messages.length"
+                        class="my-auto text-center text-sm text-neutral-400"
+                    >
+                        Send a message to get started.
+                    </p>
+
+                    <div>
+                        <InfiniteScroll
+                            v-bind="infiniteScrollProps!"
+                            class="flex flex-col gap-6"
+                        >
+                            <template #loading>
+                                <div
+                                    class="pointer-events-none sticky top-0 flex h-0 justify-center"
+                                >
+                                    <p
+                                        class="mt-1 h-fit rounded-full bg-neutral-100 px-3 py-1 text-xs text-neutral-500 dark:bg-neutral-800"
+                                    >
+                                        Loading older messages…
+                                    </p>
+                                </div>
+                            </template>
+
+                            <article
+                                v-for="message in messages"
+                                :key="message.id"
+                                class="flex"
+                                :class="
+                                    message.role === 'user' ? 'justify-end' : ''
+                                "
+                            >
+                                <div
+                                    v-if="message.role === 'user'"
+                                    v-bind="{ [promptAttribute]: '' }"
+                                    class="max-w-[85%] rounded-2xl bg-neutral-900 px-4 py-2 text-sm whitespace-pre-wrap text-white dark:bg-neutral-100 dark:text-neutral-900"
+                                >
+                                    {{ message.content }}
+                                </div>
+
+                                <div
+                                    v-else
+                                    class="min-w-0 flex-1 space-y-3 text-sm"
+                                >
+                                    <p
+                                        v-if="isAwaitingContent(message)"
+                                        class="text-neutral-500"
+                                    >
+                                        Thinking…
+                                    </p>
+
+                                    <template
+                                        v-for="(part, index) in message.parts"
+                                        :key="index"
+                                    >
+                                        <div
+                                            v-if="
+                                                part.type === 'text' &&
+                                                part.text
+                                            "
+                                            class="space-y-2 leading-relaxed [&_a]:underline [&_code]:rounded [&_code]:bg-neutral-100 [&_code]:px-1 dark:[&_code]:bg-neutral-800 [&_h1]:font-semibold [&_h2]:font-semibold [&_h3]:font-semibold [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-neutral-100 [&_pre]:p-3 dark:[&_pre]:bg-neutral-800 [&_ul]:list-disc [&_ul]:pl-5"
+                                            v-html="
+                                                renderStreamingMarkdown(
+                                                    part.text,
+                                                )
+                                            "
+                                        />
+
+                                        <div
+                                            v-else-if="
+                                                part.type === 'dynamic-tool'
+                                            "
+                                            class="rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs dark:border-neutral-800"
+                                        >
+                                            {{ part.toolName }}:
+                                            {{ part.state }}
+                                        </div>
+                                    </template>
+
+                                    <div
+                                        v-if="
+                                            can.approve &&
+                                            message.approvals.length
+                                        "
+                                        class="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950"
+                                    >
+                                        <div
+                                            v-for="approval in message.approvals"
+                                            :key="approval.id"
+                                            class="space-y-2"
+                                        >
+                                            <p class="font-medium">
+                                                {{ approval.tool }} needs
+                                                approval
+                                            </p>
+                                            <p
+                                                v-if="approval.reason"
+                                                class="text-xs text-neutral-600 dark:text-neutral-400"
+                                            >
+                                                {{ approval.reason }}
+                                            </p>
+                                            <div class="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    class="rounded-md bg-neutral-900 px-3 py-1 text-xs text-white disabled:opacity-50"
+                                                    :disabled="streaming"
+                                                    @click="
+                                                        approve(approval.id)
+                                                    "
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="rounded-md border border-neutral-300 px-3 py-1 text-xs disabled:opacity-50"
+                                                    :disabled="streaming"
+                                                    @click="reject(approval.id)"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p
+                                        v-if="message.error"
+                                        class="text-xs text-red-600"
+                                    >
+                                        {{ message.error }}
+                                    </p>
+                                </div>
+                            </article>
+                        </InfiniteScroll>
+                    </div>
+
+                    <div :style="composer.spacerStyle" />
+                </div>
+            </div>
+
+            <footer class="mx-auto w-full max-w-3xl px-4">
+                <p
+                    v-if="error"
+                    class="mb-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+                >
+                    {{ error }}
+                    <button
+                        v-if="can.retry"
+                        type="button"
+                        class="ml-2 underline"
+                        @click="retry()"
+                    >
+                        Retry
+                    </button>
+                    <button
+                        type="button"
+                        class="ml-2 underline"
+                        @click="clearError()"
+                    >
+                        Dismiss
+                    </button>
+                </p>
+
+                <form
+                    class="flex gap-2 border-t border-neutral-200 py-3 dark:border-neutral-800"
+                    @submit.prevent="composer.submit()"
+                >
+                    <input
+                        v-model="composer.draft"
+                        class="flex-1 rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-sm dark:border-neutral-700"
+                        placeholder="Message"
+                    />
+
+                    <button
+                        v-if="streaming"
+                        type="button"
+                        class="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
+                        @click="cancel()"
+                    >
+                        Stop
+                    </button>
+                    <button
+                        v-else
+                        type="submit"
+                        class="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
+                    >
+                        Send
+                    </button>
+                </form>
+            </footer>
+        </div>
+    </Chat>
+</template>

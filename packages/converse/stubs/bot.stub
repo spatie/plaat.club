@@ -1,0 +1,17 @@
+<?php
+
+namespace {{ namespace }};
+
+use Laravel\Converse\BotEvents\Message;
+use Laravel\Converse\Contracts\HandlesMentions;
+
+class {{ class }} implements HandlesMentions
+{
+    /**
+     * Handle a mention in a message.
+     */
+    public function handleMention(Message $message): void
+    {
+        $message->thread()->send('Hello, '.($message->user()->name() ?? 'there').'!');
+    }
+}

@@ -1,0 +1,6 @@
+
+Converse::agent('{{ bot }}', {{ class }}::class)
+    ->connections([
+        {{ connections }}// 'slack',
+        // 'telegram',
+    ]);

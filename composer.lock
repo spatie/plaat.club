@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "015964964ac0911dfc000bd38897f3a6",
+    "content-hash": "8f992e17c0aae9d949c93413a9283413",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -2676,16 +2676,10 @@
         {
             "name": "laravel/converse",
             "version": "0.x-dev",
-            "source": {
-                "type": "git",
-                "url": "git@github.com:laravel/converse.git",
-                "reference": "8e2541677d8416a097c6de2a3754f4a2ed602ae9"
-            },
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/converse/zipball/8e2541677d8416a097c6de2a3754f4a2ed602ae9",
-                "reference": "8e2541677d8416a097c6de2a3754f4a2ed602ae9",
-                "shasum": ""
+                "type": "path",
+                "url": "packages/converse",
+                "reference": "ac5d46a246485c63bf344a6643b8f3edbd2c056e"
             },
             "require": {
                 "ext-fileinfo": "*",
@@ -2724,7 +2718,6 @@
             "suggest": {
                 "inertiajs/inertia-laravel": "Pages the web chat transcript with Inertia 3 infinite scroll."
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -2819,7 +2812,10 @@
                 "issues": "https://github.com/laravel/converse/issues",
                 "source": "https://github.com/laravel/converse"
             },
-            "time": "2026-10-23T16:34:04+00:00"
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
         },
         {
             "name": "laravel/framework",

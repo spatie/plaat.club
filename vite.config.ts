@@ -53,6 +53,7 @@ export default defineConfig({
     lint: {
         ignorePatterns: [
             'vendor/**',
+            'packages/converse/**',
             'node_modules/**',
             'public/**',
             'bootstrap/ssr/**',
@@ -75,6 +76,7 @@ export default defineConfig({
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
             '.github/**',
+            'packages/converse/**',
             'composer.json',
             // Keep Google's ownership-verification file byte-for-byte intact.
             'public/googlec13fe7c31e9be465.html',

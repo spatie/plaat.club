@@ -1,0 +1,10 @@
+
+Route::get('{{ uri }}', function (Request $request) {
+    return Inertia::render('{{ page }}', [
+        'chat' => Converse::chat('{{ bot }}', new: $request->session()->has('new_conversation')),
+    ]);
+})->middleware(['auth', 'verified'])->name('{{ uri }}');
+
+Route::post('{{ uri }}/new', function () {
+    return to_route('{{ uri }}')->with('new_conversation', true);
+})->middleware(['auth', 'verified'])->name('{{ uri }}.new');

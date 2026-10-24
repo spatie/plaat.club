@@ -7,8 +7,14 @@
     "license": "MIT",
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/laravel/converse"
+            "type": "path",
+            "url": "packages/converse",
+            "options": {
+                "symlink": false,
+                "versions": {
+                    "laravel/converse": "0.x-dev"
+                }
+            }
         }
     ],
     "require": {
@@ -120,10 +126,7 @@
     },
     "config": {
         "optimize-autoloader": true,
-        "preferred-install": {
-            "laravel/converse": "source",
-            "*": "dist"
-        },
+        "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,

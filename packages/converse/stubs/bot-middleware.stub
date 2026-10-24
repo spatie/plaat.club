@@ -1,0 +1,17 @@
+<?php
+
+namespace {{ namespace }};
+
+use Closure;
+use Laravel\Converse\Contracts\BotEvent;
+
+class {{ class }}
+{
+    /**
+     * Handle an incoming bot event.
+     */
+    public function handle(BotEvent $event, Closure $next): mixed
+    {
+        return $next($event);
+    }
+}
