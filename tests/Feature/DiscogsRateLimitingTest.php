@@ -145,7 +145,7 @@ it('reschedules repeated rate limits without exhausting retries losing saved cop
     SyncUserCollection::dispatch($user->id);
     foreach (range(1, 4) as $attempt) {
         $this->artisan('queue:work', ['connection' => 'database', '--once' => true, '--sleep' => 0])->assertSuccessful();
-        expect($user->records()->pluck('instance_id')->all())->toBe([101, 999])
+        expect($user->records()->orderBy('instance_id')->pluck('instance_id')->all())->toBe([101, 999])
             ->and($user->records()->where('is_activity', true)->count())->toBe(0)
             ->and($user->fresh()->collection_imported_at)->toBeNull()
             ->and($user->fresh()->discogs_sync_state['page'])->toBe(1)
@@ -271,7 +271,7 @@ it('keeps one resumable import across hourly nightly and manual sync requests af
     ]);
     SyncUserCollection::dispatch($user->id);
     $this->artisan('queue:work', ['connection' => 'database', '--once' => true, '--sleep' => 0])->assertSuccessful();
-    expect($user->records()->pluck('instance_id')->all())->toBe([101, 999])
+    expect($user->records()->orderBy('instance_id')->pluck('instance_id')->all())->toBe([101, 999])
         ->and($user->fresh()->discogs_sync_state['page'])->toBe(2);
 
     foreach ([3, 23] as $hours) {

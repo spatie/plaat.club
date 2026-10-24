@@ -163,9 +163,13 @@ it('keeps browsing current after individual and bulk collection changes', functi
     $collection->storeMany([[...$copy->payload, 'artists' => ['Bulk edited artist']]]);
     $this->get('/cached_shelf?mode=artist')->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('groups.0.name', 'Bulk edited artist'));
-    DB::unprepared("CREATE TRIGGER reject_browse_update BEFORE INSERT ON collection_browse_entries
-        WHEN NEW.name = 'Rejected artist'
-        BEGIN SELECT RAISE(FAIL, 'Simulated index write failure'); END");
+    if (DB::getDriverName() === 'sqlite') {
+        DB::unprepared("CREATE TRIGGER reject_browse_update BEFORE INSERT ON collection_browse_entries
+            WHEN NEW.name = 'Rejected artist'
+            BEGIN SELECT RAISE(FAIL, 'Simulated index write failure'); END");
+    } else {
+        DB::statement("ALTER TABLE collection_browse_entries ADD CONSTRAINT reject_browse_update CHECK (name <> 'Rejected artist')");
+    }
     $copy->refresh();
     expect(fn () => app(StoreCollectionRecordAction::class)->execute($copy, ['payload' => [...$copy->payload, 'title' => 'Rejected title', 'artists' => ['Rejected artist']]]))
         ->toThrow(QueryException::class);

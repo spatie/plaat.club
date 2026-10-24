@@ -19,7 +19,7 @@ return new class extends Migration
                 $cases = [];
                 $bindings = [];
                 foreach ($rows as $row) {
-                    $cases[] = 'WHEN ? THEN ?';
+                    $cases[] = DB::getDriverName() === 'pgsql' ? 'WHEN ? THEN CAST(? AS UUID)' : 'WHEN ? THEN ?';
                     $bindings[] = $row->id;
                     $bindings[] = (string) Str::uuid();
                 }

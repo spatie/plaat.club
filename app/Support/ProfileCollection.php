@@ -38,9 +38,11 @@ class ProfileCollection
         }
 
         $mode = $this->state()['mode'];
-        $latest = DB::getDriverName() === 'mysql'
-            ? "MAX(CONCAT(records.added_at, LPAD(records.id, 20, '0')))"
-            : "MAX(records.added_at || printf('%020d', records.id))";
+        $latest = match (DB::getDriverName()) {
+            'mysql' => "MAX(CONCAT(records.added_at, LPAD(records.id, 20, '0')))",
+            'pgsql' => "MAX(CONCAT(records.added_at, LPAD(CAST(records.id AS TEXT), 20, '0')))",
+            default => "MAX(records.added_at || printf('%020d', records.id))",
+        };
         $counts = $this->query()->selectRaw($this->sectionExpression()." AS section, COUNT(*) AS total, {$latest} AS latest")
             ->groupBy('section')->get()->all();
         usort($counts, fn ($first, $second) => match ($mode) {
@@ -105,9 +107,10 @@ class ProfileCollection
         $terms = preg_split('/\s+/', Str::lower(Str::ascii(trim($search))), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         foreach ($terms as $term) {
             $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+            $text = DB::getDriverName() === 'pgsql' ? 'TEXT' : 'CHAR';
             $query->where(fn (EloquentBuilder $query) => $query
                 ->whereRaw("records.browse_search LIKE ? ESCAPE '!'", [$pattern])
-                ->orWhereRaw('CAST('.$this->yearExpression()." AS CHAR) LIKE ? ESCAPE '!'", [$pattern]));
+                ->orWhereRaw('CAST('.$this->yearExpression()." AS {$text}) LIKE ? ESCAPE '!'", [$pattern]));
         }
     }
 
@@ -156,15 +159,16 @@ class ProfileCollection
 
         if ($mode === 'decade') {
             // MySQL otherwise prefers the user/instance index and reads every large record row.
-            $query->forceIndex('collection_records_decade_index')->where(function (Builder $query) use ($values): void {
-                $query->whereNull('records.browse_original_year');
-                foreach ($values as $value) {
-                    if ($value !== null) {
-                        $year = (int) $value;
-                        $query->orWhereBetween('records.browse_original_year', [$year, $year + 9]);
+            $query->when(DB::getDriverName() === 'mysql', fn (Builder $query) => $query->forceIndex('collection_records_decade_index'))
+                ->where(function (Builder $query) use ($values): void {
+                    $query->whereNull('records.browse_original_year');
+                    foreach ($values as $value) {
+                        if ($value !== null) {
+                            $year = (int) $value;
+                            $query->orWhereBetween('records.browse_original_year', [$year, $year + 9]);
+                        }
                     }
-                }
-            });
+                });
         }
 
         if (in_array($mode, ['recent', 'genre'], true)) {
@@ -187,13 +191,14 @@ class ProfileCollection
         }
 
         // Keep PHP's natural title ordering, but read only narrow rows in the sections on this page.
-        $date = 'CASE WHEN records.browse_original_year IS NOT NULL AND records.browse_original_year <> CAST(SUBSTR(dates.original_release_date, 1, 4) AS DECIMAL)
-            THEN CAST(records.browse_original_year AS CHAR) ELSE COALESCE(dates.original_release_date, CAST(records.browse_original_year AS CHAR)) END';
-        $rows = $query->addSelect('records.browse_title as title')->selectRaw("{$date} AS originalDate")->get()->all();
+        $text = DB::getDriverName() === 'pgsql' ? 'TEXT' : 'CHAR';
+        $date = "CASE WHEN records.browse_original_year IS NOT NULL AND records.browse_original_year <> CAST(SUBSTR(dates.original_release_date, 1, 4) AS DECIMAL)
+            THEN CAST(records.browse_original_year AS {$text}) ELSE COALESCE(dates.original_release_date, CAST(records.browse_original_year AS {$text})) END";
+        $rows = $query->addSelect('records.browse_title as title')->selectRaw("{$date} AS original_date")->get()->all();
         $positions = array_flip(array_column($groups, 'name'));
         usort($rows, function ($first, $second) use ($positions, $mode): int {
             $groups = $positions[$this->sectionName($first->section)] <=> $positions[$this->sectionName($second->section)];
-            $dates = ($first->originalDate ?? ($mode === 'artist' ? '' : '9999')) <=> ($second->originalDate ?? ($mode === 'artist' ? '' : '9999'));
+            $dates = ($first->original_date ?? ($mode === 'artist' ? '' : '9999')) <=> ($second->original_date ?? ($mode === 'artist' ? '' : '9999'));
 
             return $groups ?: ($mode === 'artist' ? -$dates : $dates)
                 ?: strnatcasecmp($first->title, $second->title) ?: $first->copyId <=> $second->copyId;

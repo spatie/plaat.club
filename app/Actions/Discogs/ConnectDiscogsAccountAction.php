@@ -4,6 +4,7 @@ namespace App\Actions\Discogs;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class ConnectDiscogsAccountAction
@@ -14,7 +15,7 @@ class ConnectDiscogsAccountAction
             throw new RuntimeException('Wrong legacy owner');
         }
 
-        Cache::lock('discogs-sync-'.$user->id, 7500)->block(3, function () use ($user, $username, $token, $secret): void {
+        Cache::lock('discogs-sync-'.$user->id, 7500)->block(3, fn () => DB::transaction(function () use ($user, $username, $token, $secret): void {
             $current = $user->fresh();
             // Reconnecting must never mix two different people's collections.
             if ($current->discogs_username && $current->discogs_username !== $username) {
@@ -29,6 +30,6 @@ class ConnectDiscogsAccountAction
             ]);
             activity('discogs')->causedBy($user)->performedOn($user)->withProperties(['username' => $username])
                 ->event('discogs_connected')->log('Discogs account connected');
-        });
+        }));
     }
 }

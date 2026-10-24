@@ -173,7 +173,7 @@ it('resumes a deployment-interrupted import without removing records or announci
         },
     ]);
     $job->handle(app(ImportDiscogsRecordAction::class), app(CompleteCollectionSyncAction::class));
-    expect($user->records()->pluck('instance_id')->all())->toBe([301, 303])
+    expect($user->records()->orderBy('instance_id')->pluck('instance_id')->all())->toBe([301, 303])
         ->and($user->fresh()->collection_imported_at)->toBeNull()
         ->and($user->fresh()->sync_status)->toBe('Syncing');
     $this->assertDatabaseCount('activity_log', 1);
@@ -364,7 +364,7 @@ it('checks additions across timestamp ties without scanning old pages or applyin
     (new SyncUserCollection($user->id, full: false))->handle(app(ImportDiscogsRecordAction::class), app(CompleteCollectionSyncAction::class));
 
     expect($user->records()->orderBy('instance_id')->pluck('instance_id')->all())->toBe([101, 102, 103, 104, 999])
-        ->and($user->records()->where('is_activity', true)->where('instance_id', '!=', 999)->pluck('instance_id')->all())->toBe([102, 103, 104])
+        ->and($user->records()->where('is_activity', true)->where('instance_id', '!=', 999)->orderBy('instance_id')->pluck('instance_id')->all())->toBe([102, 103, 104])
         ->and($user->fresh()->last_synced_at->equalTo($checkedAt))->toBeTrue()
         ->and($user->fresh()->discogs_additions_checked_at->equalTo($checkedAt->addHour()))->toBeTrue()
         ->and($user->fresh()->sync_status)->toBe('Additions checked')
@@ -552,7 +552,7 @@ it('restarts a changed paginated snapshot without applying incomplete removals',
         'api.discogs.com/masters/*' => Http::response(['year' => 1973]),
     ]);
     expect(fn () => (new SyncUserCollection($user->id))->handle(app(ImportDiscogsRecordAction::class), app(CompleteCollectionSyncAction::class)))->toThrow(RuntimeException::class);
-    expect($user->records()->pluck('instance_id')->all())->toBe([101, 999])
+    expect($user->records()->orderBy('instance_id')->pluck('instance_id')->all())->toBe([101, 999])
         ->and($user->fresh()->collection_imported_at)->toBeNull();
     (new SyncUserCollection($user->id))->handle(app(ImportDiscogsRecordAction::class), app(CompleteCollectionSyncAction::class));
     expect($user->records()->pluck('instance_id')->all())->toBe([102])
