@@ -3,8 +3,10 @@
 use App\Models\DiscogsResponse;
 use App\Models\SocialNotification;
 use Illuminate\Support\Facades\Schedule;
+use Laravel\Converse\Models\Thread;
+use Laravel\Converse\Models\ThreadEvent;
 
-Schedule::command('model:prune', ['--model' => [SocialNotification::class, DiscogsResponse::class]])
+Schedule::command('model:prune', ['--model' => [SocialNotification::class, DiscogsResponse::class, ThreadEvent::class, Thread::class]])
     ->hourly()->withoutOverlapping()->onOneServer();
 
 // Clears this scheduler's local files, not other web instances' image stores.

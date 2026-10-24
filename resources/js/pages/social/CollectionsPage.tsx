@@ -14,20 +14,36 @@ export function CollectionsPage(props: CollectionsProps) {
                 <h1>Explore.</h1>
                 <p>Collections and lists shared with everyone.</p>
             </div>
-            <nav className="collection-tabs" aria-label="Explore">
+            <nav className="collection-tabs explore-tabs" aria-label="Explore">
                 <Link
                     href="/collections"
+                    viewTransition
+                    preserveScroll
                     aria-current={
                         props.tab === 'collections' ? 'page' : undefined
                     }
                 >
                     Collections
+                    {props.tab === 'collections' && (
+                        <span
+                            className="explore-tab-indicator"
+                            aria-hidden="true"
+                        />
+                    )}
                 </Link>
                 <Link
                     href="/collections?tab=lists"
+                    viewTransition
+                    preserveScroll
                     aria-current={props.tab === 'lists' ? 'page' : undefined}
                 >
                     Lists
+                    {props.tab === 'lists' && (
+                        <span
+                            className="explore-tab-indicator"
+                            aria-hidden="true"
+                        />
+                    )}
                 </Link>
             </nav>
             {props.tab === 'lists' ? (

@@ -47,6 +47,55 @@ composer dev
 
 `composer setup` installs the PHP and JS dependencies, creates `.env`, generates an app key, migrates the SQLite database and builds the frontend. The site works straight away using the bundled snapshot in `resources/data/collection.json`.
 
+## Collection questions (prototype)
+
+The authenticated `/ask` page uses Laravel Converse and a Laravel AI tool-calling agent to search accessible collections and compare shared albums, artists and styles. Enable it with `AI_SEARCH_ENABLED=true` and an `OPENAI_API_KEY`; `AI_SEARCH_MODEL` defaults to `gpt-5.5`. A queue worker must be running. Follow-ups receive up to twelve previous messages in chronological order, with bounded, access-rechecked facts about displayed records: `Show my jazz` → `Only vinyl` → `And from the nineties?`. Confirmed lists remain available for subsequent requests such as “rename that list”. Returning to the page resumes the latest conversation; New conversation starts fresh.
+
+Number-only questions use a count tool intent and render no record or collector cards. Counts include every matching collection copy, including duplicates, rather than just the search preview or distinct releases.
+
+Buying recommendations (`Which records should I buy next?` → `More rock` → `More recent stuff`)
+use `ReadCollectionTaste` for a bounded overview of the owner's artists and recent additions,
+then general model knowledge to propose albums. `CheckRecordPurchases` verifies candidates against
+already imported public catalogue facts, falling back to MusicBrainz release groups, and checks
+the full imported collection. Only uniquely matched candidates not found in the collection should
+be recommended, with original release years and links to the actual Discogs or MusicBrainz source.
+ID matches and normalised artist/title matches (including common deluxe/expanded edition suffixes)
+exclude owned albums; unmatched aliases and incomplete imports can still miss duplicates.
+Ownership is not a favourite rating or listening history. Empty collections need user-supplied tastes.
+Musical fit is model judgment, not a MusicBrainz review or audio analysis. Recent suggestions are
+not an exhaustive list of the latest releases. Prices, availability and specific pressings are not checked.
+
+Only candidate artist/title queries go to MusicBrainz, not collection snapshots, account identity or
+notes. Core identity/date metadata is CC0; no reviews, ratings, tags or other supplementary content
+are imported. Unique matches are cached for seven days, but ownership is rechecked every turn.
+Checks share the existing MusicBrainz request lock/backoff and allow at most eight candidates per
+turn, five per call. Outages and ambiguous matches are reported rather than treated as missing albums.
+This needs neither a new API key nor vector indexing. MusicBrainz's hosted-service access rules
+and any commercial service agreement still apply independently of the core data licence.
+AllMusic, Last.fm, CritiqueBrainz and listening-history integrations are not used.
+General musical discussion is allowed, but unrelated general-purpose requests are declined by
+the agent instructions; this is not an abuse-proof security boundary. Daily quotas still apply.
+
+AI turns are limited to `AI_DAILY_USER_LIMIT=25` per user and `AI_DAILY_GLOBAL_LIMIT=1000` across the app. Both reset at midnight in `AI_DAILY_LIMIT_TIMEZONE=Europe/Brussels`; zero disables AI questions. Reservations happen atomically before calling the provider. Rejected questions do not consume either allowance, and local list confirmations/cancellations do not consume AI quota. Provider failures and stopped turns still count because they may incur costs. Exhaustion produces a conversation reply naming the personal or shared limit and its exact reset time. The existing 10-per-minute user throttle remains in place for web submissions.
+
+`users.ai_daily_question_limit` overrides the personal daily limit for an individual account. Null uses the configured default; zero disables that account's AI questions. The migration sets existing `freek`, `jmoortga` and `thomasbartosik` accounts to 5,000. Overrides still consume and obey the shared app-wide cap; they do not reset today's usage.
+
+All application workers must share a durable cache/lock store (for example Redis) for app-wide limits to hold across instances. Clearing that cache resets the allowance. These are interaction limits, not a currency budget: each question can invoke multiple model steps and optional embeddings. Batch indexing is outside the chat allowance. For a hard spending ceiling, also configure provider-side budget controls; changing those shared settings is not part of this prototype.
+
+The agent sends questions, recent conversational context and bounded relevant search/list tool results to OpenAI, with response storage disabled at the provider level so multi-step tool calls replay context rather than retrieve stored responses. Neither private nor shared notes are sent by tools. Permission checks, full collection snapshots, bulk selection IDs, confirmation tokens and card rendering stay in Laravel. Permissions are checked again for every follow-up; inaccessible prior assistant context is withheld. Album comparisons use Discogs masters, with explicitly unverified artist/title fallbacks when master IDs are missing. Runs allow up to eight model steps, with a 330-second Converse timeout; queue `retry_after` must exceed that timeout.
+
+For optional metadata-based recommendations, use PostgreSQL with pgvector, run `php artisan migrate`, then `php artisan records:embed` and enable `AI_SEMANTIC_ENABLED=true`. The indexing command sends only public album titles, artists, original years, genres and styles to OpenAI (`text-embedding-3-small`, 512 dimensions). It skips unchanged documents; rerun it after imports/enrichment. Biographies, notes, ownership and listening activity are not embedded. Queries are translated into short English descriptions without adding inferred music facts, then embedded and cached. Examples: `Iets zoals Mezzanine van Massive Attack`, `Rustige muziek voor zondagochtend`, or `Donkere triphop op vinyl uit de jaren 90`.
+
+Recommendations respect the same current collection permissions and explicit factual filters as ordinary searches. They show up to 24 distinct albums from indexed releases, ranked by exact cosine distance; at this catalogue size no approximate index is needed. They are labeled as suggestions, not verified audio or mood matches. Nationality, the absence of vocals, BPM and similar unavailable facts remain unsupported. Semantic suggestions cannot select records for list writes or replace collection-overlap comparisons. Relevance still needs human evaluation, especially for open-ended mood requests; cosine scores are not confidence percentages. The feature remains disabled by default.
+
+The agent uses `SearchCollections`, `ReadRecordLists` and proposal-only `ProposeRecordList` tools. It cannot invoke `WriteRecordList`; that is reserved for local confirmation. Try `Show my lists`, `Create list "Jazz evening" with my seventies jazz`, `Rename that list to Jazz club`, or `Delete list Jazz club`. Adding and removing records uses the same factual search filters and includes all matching collection copies, not just the 24 search previews. Specific displayed factual records can also be selected by their trusted IDs. The existing 1,000-record limit still applies.
+
+Every write first produces a proposal. Reply with its exact `confirm <code>` in the same conversation within ten minutes, or `cancel`. Another question cancels the proposal. Confirmation rechecks ownership, selected records and whether the list changed since the preview; it does not ask OpenAI again. New lists are private unless an audience was explicitly requested. Deleting a list never deletes collection records.
+
+Converse is currently a private, unreleased dependency. Composer and build environments need GitHub credentials with read access to `laravel/converse`, supplied through Composer authentication, never committed. Composer installs its pinned source checkout because its distribution archive excludes the frontend packages. Vite and TypeScript resolve the official React and core packages from that checkout until NPM releases are available. Install Composer dependencies before building the frontend.
+
+Conversations are private to their owner, pruned after 60 inactive days, and removed when the account is deleted. The feature is disabled by default.
+
 ## Syncing a collection
 
 Point the app at a Discogs user in `.env`:

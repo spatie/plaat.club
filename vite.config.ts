@@ -8,6 +8,12 @@ import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            '@laravel/converse-react': `${import.meta.dirname}/vendor/laravel/converse/packages/react/src/index.ts`,
+            '@laravel/converse': `${import.meta.dirname}/vendor/laravel/converse/packages/converse/src/index.ts`,
+        },
+    },
     plugins: lazyPlugins(() => [
         laravel({
             input: [

@@ -3,14 +3,15 @@
 namespace App\Support;
 
 use App\Models\Release;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class MusicBrainzListeningLinks
 {
+    public function __construct(
+        protected MusicBrainz $musicBrainz,
+    ) {}
+
     /** @return array<string, mixed> */
     public function forRelease(Release $release): array
     {
@@ -28,7 +29,7 @@ class MusicBrainzListeningLinks
 
         $offset = 0;
         do {
-            $page = $this->get('release', ['release-group' => $group, 'inc' => 'url-rels+media+artist-credits', 'limit' => 100, 'offset' => $offset]);
+            $page = $this->musicBrainz->get('release', ['release-group' => $group, 'inc' => 'url-rels+media+artist-credits', 'limit' => 100, 'offset' => $offset]);
             $editions = $page['releases'] ?? [];
             if ($editions === [] && $offset < ($page['release-count'] ?? 0)) {
                 throw new RuntimeException('MusicBrainz returned an incomplete release list.');
@@ -50,7 +51,7 @@ class MusicBrainzListeningLinks
                     continue;
                 }
 
-                $details = $this->get('release/'.$edition['id'], ['inc' => 'recordings']);
+                $details = $this->musicBrainz->get('release/'.$edition['id'], ['inc' => 'recordings']);
                 $titles = [];
                 foreach ($details['media'] ?? [] as $medium) {
                     foreach ($medium['tracks'] ?? [] as $track) {
@@ -79,7 +80,7 @@ class MusicBrainzListeningLinks
     protected function group(array $record): ?string
     {
         if (! empty($record['musicbrainzId'])) {
-            $group = $this->get('release-group/'.$record['musicbrainzId'], ['inc' => 'artist-credits']);
+            $group = $this->musicBrainz->get('release-group/'.$record['musicbrainzId'], ['inc' => 'artist-credits']);
             if ($group !== null && $this->sameRecord($record, $group)) {
                 return $group['id'];
             }
@@ -89,20 +90,20 @@ class MusicBrainzListeningLinks
             if (! $id) {
                 continue;
             }
-            $mapping = $this->get('url', [
+            $mapping = $this->musicBrainz->get('url', [
                 'resource' => "https://www.discogs.com/{$kind}/{$id}",
                 'inc' => 'release-rels+release-group-rels',
             ]);
             $groups = [];
             foreach ($mapping['relations'] ?? [] as $relation) {
                 if (isset($relation['release'])) {
-                    $edition = $this->get('release/'.$relation['release']['id'], ['inc' => 'release-groups+artist-credits']);
+                    $edition = $this->musicBrainz->get('release/'.$relation['release']['id'], ['inc' => 'release-groups+artist-credits']);
                     if ($edition !== null && $this->sameRecord($record, $edition) && isset($edition['release-group']['id'])) {
                         $groups[] = $edition['release-group']['id'];
                     }
                 }
                 if (isset($relation['release-group'])) {
-                    $group = $this->get('release-group/'.$relation['release-group']['id'], ['inc' => 'artist-credits']);
+                    $group = $this->musicBrainz->get('release-group/'.$relation['release-group']['id'], ['inc' => 'artist-credits']);
                     if ($group !== null && $this->sameRecord($record, $group)) {
                         $groups[] = $group['id'];
                     }
@@ -117,7 +118,7 @@ class MusicBrainzListeningLinks
         $escape = fn (string $value): string => str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
         $title = $escape($record['displayTitle'] ?? $record['title']);
         $artist = $escape($record['artists'][0] ?? $record['artist']);
-        $result = $this->get('release-group', ['query' => "releasegroup:\"{$title}\" AND artist:\"{$artist}\"", 'limit' => 25]);
+        $result = $this->musicBrainz->get('release-group', ['query' => "releasegroup:\"{$title}\" AND artist:\"{$artist}\"", 'limit' => 25]);
         $matches = [];
         foreach ($result['release-groups'] ?? [] as $group) {
             if (($group['score'] ?? 0) < 95 || ! $this->sameRecord($record, $group)) {
@@ -200,43 +201,5 @@ class MusicBrainzListeningLinks
     protected function comparable(string $value): string
     {
         return preg_replace('/[^a-z0-9]/', '', Str::lower(Str::ascii($value))) ?? '';
-    }
-
-    /**
-     * @param  array<string, int|string>  $query
-     * @return array<string, mixed>|null
-     */
-    protected function get(string $path, array $query): ?array
-    {
-        return Cache::lock('musicbrainz-request', 35)->block(40, function () use ($path, $query): ?array {
-            $delay = Cache::get('musicbrainz-next-request', 0) - now()->getTimestampMs();
-            if ($delay > 5000) {
-                throw new MusicBrainzRateLimitException((int) ceil($delay / 1000));
-            }
-            if ($delay > 0) {
-                Sleep::for($delay)->milliseconds();
-            }
-
-            try {
-                $response = Http::withUserAgent(config('services.musicbrainz.user_agent'))
-                    ->connectTimeout(5)->timeout(20)
-                    ->get("https://musicbrainz.org/ws/2/{$path}", [...$query, 'fmt' => 'json']);
-            } finally {
-                Cache::put('musicbrainz-next-request', now()->getTimestampMs() + 1100, 120);
-            }
-            if (in_array($response->status(), [429, 503], true)) {
-                $retry = $response->header('Retry-After');
-                $seconds = is_numeric($retry) ? (int) $retry : max(0, (strtotime($retry) ?: 0) - now()->getTimestamp());
-                $seconds = max(60, $seconds);
-                Cache::put('musicbrainz-next-request', now()->addSeconds($seconds)->getTimestampMs(), $seconds + 120);
-
-                throw new MusicBrainzRateLimitException($seconds);
-            }
-            if ($response->status() === 404) {
-                return null;
-            }
-
-            return $response->throw()->json();
-        });
     }
 }

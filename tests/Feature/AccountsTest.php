@@ -41,8 +41,10 @@ it('switches existing local demo accounts without passwords and ignores forged p
     config(['services.social_demo' => true]);
     $alex = socialUser('alex');
     $robin = socialUser('robin');
+    $freek = User::freek();
+    $freek->update(['email' => 'freek@example.test']);
     $this->get('/login')->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->has('demoUsers', 2)->where('demoUsers.0.label', 'Alex')->where('demoUsers.1.label', 'Robin'));
+        ->has('demoUsers', 3)->where('demoUsers.0.label', 'Alex')->where('demoUsers.1.label', 'Robin')->where('demoUsers.2.label', 'Freek'));
 
     $this->withSession(['_token' => 'demo-login'])->post(route('loginLinkLogin'), ['email' => $alex->email, '_token' => 'demo-login'])->assertRedirect('/friends');
     $this->assertAuthenticatedAs($alex);
@@ -56,6 +58,9 @@ it('switches existing local demo accounts without passwords and ignores forged p
     $this->withSession(['_token' => 'demo-login'])->post(route('loginLinkLogin').'?'.http_build_query($forged), ['email' => $alex->email, '_token' => 'demo-login'])->assertRedirect('/friends');
     $this->assertAuthenticatedAs($alex);
     $this->get('/friends')->assertOk();
+
+    $this->withSession(['_token' => 'demo-login'])->post(route('loginLinkLogin'), ['email' => $freek->email, '_token' => 'demo-login'])->assertRedirect('/friends');
+    $this->assertAuthenticatedAs($freek);
 });
 
 it('does not allow login links for Freek, arbitrary accounts or missing demo accounts', function ($email) {

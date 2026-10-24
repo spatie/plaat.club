@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountDeletionController;
+use App\Http\Controllers\CollectionSearchController;
 use App\Http\Controllers\CollectionVisibilityController;
 use App\Http\Controllers\DiscogsConnectionController;
 use App\Http\Controllers\FriendRequestResponseController;
@@ -74,6 +75,8 @@ Route::middleware([PrivateResponse::class, RequireVerifiedAccount::class, Ensure
         Route::post('/email/verification-notification', [AccountController::class, 'resend'])->middleware('throttle:6,1')->name('verification.send');
 
         Route::middleware('verified')->group(function () {
+            Route::get('/ask', [CollectionSearchController::class, 'index'])->name('collectionSearch');
+            Route::patch('/ask/answers/{question}/feedback', [CollectionSearchController::class, 'update'])->middleware('throttle:30,1')->name('collectionAnswerFeedback');
             Route::get('/feed', fn (Request $request) => redirect()->route('feed', $request->query(), 301));
             Route::get('/friends', [SocialController::class, 'feed'])->name('feed');
             Route::get('/lists', [RecordListsController::class, 'index'])->name('lists.index');

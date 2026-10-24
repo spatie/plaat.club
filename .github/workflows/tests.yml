@@ -13,6 +13,26 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, pgsql]
+
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.2-pg18-bookworm
+        env:
+          POSTGRES_DB: plaat_club_test
+          POSTGRES_USER: plaat
+          POSTGRES_PASSWORD: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -23,6 +43,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.5'
+          extensions: pdo_pgsql
           tools: composer:v2
           coverage: none
 
@@ -33,6 +54,15 @@ jobs:
 
       - name: Setup Application
         run: composer setup
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
       - name: Run CI Checks
         run: composer ci:check
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_DATABASE: ${{ matrix.database == 'pgsql' && 'plaat_club_test' || ':memory:' }}
+          DB_USERNAME: plaat
+          DB_PASSWORD: testing

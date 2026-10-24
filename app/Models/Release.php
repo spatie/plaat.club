@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int $id
  * @property array<string, mixed> $data
+ * @property ?string $artist
+ * @property ?string $title
  * @property ?string $cover
  * @property ?string $cover_preview
  * @property ?CarbonImmutable $info_imported_at
@@ -48,6 +50,16 @@ class Release extends Model
     public function artists(): BelongsToMany
     {
         return $this->belongsToMany(Artist::class)->withPivot('position')->orderByPivot('position');
+    }
+
+    public function embeddingText(): string
+    {
+        return implode("\n", [
+            'Album: '.mb_substr($this->artist.' — '.$this->title, 0, 250),
+            'Original year: '.($this->original_year ?? ''),
+            'Genres: '.implode(', ', $this->data['genres'] ?? []),
+            'Styles: '.implode(', ', $this->data['styles'] ?? []),
+        ]);
     }
 
     /** @return array<string, mixed> */

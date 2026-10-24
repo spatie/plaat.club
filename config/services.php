@@ -4,6 +4,18 @@ return [
 
     'social_demo' => env('SOCIAL_DEMO_MODE', false),
 
+    'openai' => [
+        'search_enabled' => env('AI_SEARCH_ENABLED', false),
+        'search_model' => env('AI_SEARCH_MODEL', 'gpt-5.5'),
+        'semantic_enabled' => env('AI_SEMANTIC_ENABLED', false),
+        'daily_user_limit' => (int) env('AI_DAILY_USER_LIMIT', 25),
+        'daily_global_limit' => (int) env('AI_DAILY_GLOBAL_LIMIT', 1000),
+        'daily_limit_timezone' => env('AI_DAILY_LIMIT_TIMEZONE', 'Europe/Brussels'),
+        'search_pricing' => [
+            'gpt-5.5' => ['input' => 5, 'cached_input' => 0.5, 'output' => 30],
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

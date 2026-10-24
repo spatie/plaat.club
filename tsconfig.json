@@ -108,6 +108,12 @@
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         "skipLibCheck": true /* Skip type checking all .d.ts files. */,
         "paths": {
+            "@laravel/converse-react": [
+                "./vendor/laravel/converse/packages/react/src/index.ts"
+            ],
+            "@laravel/converse": [
+                "./vendor/laravel/converse/packages/converse/src/index.ts"
+            ],
             "@/*": ["./resources/js/*"]
         },
         "jsx": "react-jsx"

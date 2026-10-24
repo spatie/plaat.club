@@ -19,6 +19,25 @@ if ! php -m | grep -qi '^pdo_mysql$' || ! dpkg-query -W libaio1 libnuma1 >/dev/n
     sudo apt-get update -qq
     sudo apt-get install -y -qq php8.5-mysql libaio1 libnuma1
 fi
+if ! php -m | grep -qi '^pdo_pgsql$' || ! test -x /usr/lib/postgresql/15/bin/postgres; then
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq php8.5-pgsql postgresql-15 postgresql-client-15
+fi
+if ! test -f /usr/share/postgresql/15/extension/vector.control; then
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq build-essential postgresql-server-dev-15
+    vector_source="$(mktemp -d)"
+    git clone --quiet --depth 1 --branch v0.8.2 https://github.com/pgvector/pgvector.git "$vector_source"
+    test "$(git -C "$vector_source" rev-parse HEAD)" = cab9da72c04353f143bb06b42ab70a403daac64a
+    make -s -C "$vector_source" -j2
+    sudo make -s -C "$vector_source" install
+    rm -rf "$vector_source"
+fi
+postgres_data="$HOME/.local/share/plaat-postgres"
+if ! test -f "$postgres_data/PG_VERSION"; then
+    mkdir -p "$postgres_data"
+    /usr/lib/postgresql/15/bin/initdb -D "$postgres_data" --auth-local=trust --auth-host=trust -U plaat --encoding=UTF8 --locale=C.UTF-8
+fi
 if ! test -x /opt/mysql/bin/mysqld; then
     curl -fsSL https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.13-linux-glibc2.28-x86_64-minimal.tar.xz -o /tmp/plaat-mysql.tar.xz
     echo '5dfbb764f731df40ef9e4f5d69aed32bdac8ba1af20bd96b7d40a942d83d4ed2  /tmp/plaat-mysql.tar.xz' | sha256sum -c -
@@ -68,6 +87,11 @@ fi
 if ! rg -q '^APP_KEY=base64:' .env; then php artisan key:generate; fi
 test -f database/database.sqlite || touch database/database.sqlite
 amp orb services ensure
+for database in plaat_club plaat_club_test; do
+    if ! psql -h 127.0.0.1 -U plaat -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$database'" | grep -q 1; then
+        createdb -h 127.0.0.1 -U plaat "$database"
+    fi
+done
 php artisan migrate --force
 npm ci --no-audit --no-fund
 npm run build

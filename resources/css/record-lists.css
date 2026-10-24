@@ -1,3 +1,14 @@
+::view-transition-group(explore-tab-indicator) {
+    animation-duration: 280ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(explore-tab-indicator) {
+        animation-duration: 0s;
+    }
+}
+
 @scope (.social-app) {
     :scope.lists-page {
         --page-color: var(--cream);
@@ -17,6 +28,17 @@
     .page > .collection-tabs a[aria-current] {
         border-color: var(--ink);
         font-weight: 600;
+    }
+    .page > .explore-tabs a {
+        position: relative;
+        border-bottom-color: transparent;
+    }
+    .explore-tab-indicator {
+        position: absolute;
+        inset: auto 0 -3px;
+        height: 3px;
+        background: var(--ink);
+        view-transition-name: explore-tab-indicator;
     }
     .page > .collection-tabs + .profile-record-room .collection-controls {
         border-top: 0;

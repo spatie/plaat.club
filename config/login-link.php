@@ -21,6 +21,7 @@ return [
         'sam@example.test' => 'Sam',
         'casey@example.test' => 'Casey',
         'jamie@example.test' => 'Jamie',
+        'freek@example.test' => 'Freek',
     ],
 
     'middleware' => ['web', 'auth.session', PrivateResponse::class, DemoLoginLinks::class, 'throttle:30,1'],

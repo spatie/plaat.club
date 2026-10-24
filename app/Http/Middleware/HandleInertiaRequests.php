@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
             'impersonating' => fn () => $request->session()->has('impersonator_id'),
             'csrfToken' => fn () => $request->session()->token(),
             'googleEnabled' => filled(config('services.google.client_id')) && filled(config('services.google.client_secret')),
+            'aiSearchEnabled' => (bool) config('services.openai.search_enabled'),
             'notificationCount' => fn () => $request->user()
                 ? SocialNotification::visibleTo($request->user())->whereNull('read_at')->count()
                 : 0,

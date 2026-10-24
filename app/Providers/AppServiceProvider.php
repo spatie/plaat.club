@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\FulfillInvitationsListener;
 use App\Listeners\LogAuthenticationActivityListener;
+use App\Listeners\LogCollectionQuestionListener;
 use App\Listeners\SendNewUserMailListener;
 use App\Models\Activity;
 use App\Models\User;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Ai\Events\AgentFailed;
+use Laravel\Ai\Events\AgentPrompted;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Date::use(CarbonImmutable::class);
         config(['activitylog.activity_model' => Activity::class]);
+        config(['ai.providers.openai.store' => false]);
 
         VerifyEmail::createUrlUsing(fn (User $user): string => URL::temporarySignedRoute(
             'verification.verify',
@@ -41,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Registered::class, [SendNewUserMailListener::class, 'send']);
         Event::listen(Verified::class, [FulfillInvitationsListener::class, 'fulfill']);
         Event::listen([Login::class, Logout::class, Registered::class, Verified::class, PasswordReset::class], [LogAuthenticationActivityListener::class, 'log']);
+        Event::listen([AgentPrompted::class, AgentFailed::class], [LogCollectionQuestionListener::class, 'log']);
 
         VerifyEmail::toMailUsing(fn (User $user, string $url): MailMessage => (new MailMessage)
             ->subject('One more spin. Verify your Plaat Club email.')
@@ -54,5 +59,8 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(app()->isProduction());
 
         RateLimiter::for('shareImages', fn (Request $request): Limit => Limit::perMinute(60)->by($request->ip()));
+        RateLimiter::for('collectionQuestions', fn (Request $request): Limit => $request->routeIs('converse.web.send')
+            ? Limit::perMinute(10)->by($request->user()->id)
+            : Limit::none());
     }
 }

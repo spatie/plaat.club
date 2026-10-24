@@ -161,6 +161,16 @@ export function SocialLayout({ children }: { children: ReactNode }) {
                                 >
                                     Explore
                                 </Link>
+                                {props.aiSearchEnabled && (
+                                    <Link
+                                        href="/ask"
+                                        aria-current={
+                                            path === '/ask' ? 'page' : undefined
+                                        }
+                                    >
+                                        Ask your collection
+                                    </Link>
+                                )}
                             </nav>
                         )}
                         <div className="header-account">

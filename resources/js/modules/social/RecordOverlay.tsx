@@ -22,14 +22,17 @@ export const RecordOverlayContext = createContext<
 export function RecordLink({
     href,
     children,
+    className,
 }: {
     href: string;
     children: ReactNode;
+    className?: string;
 }) {
     const open = useContext(RecordOverlayContext);
     return (
         <Link
             href={href}
+            className={className}
             onClick={(event) => {
                 if (
                     event.button !== 0 ||

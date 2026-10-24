@@ -2,12 +2,14 @@
 
 namespace App\Actions\Accounts;
 
+use App\Models\Activity;
 use App\Models\User;
 use App\Support\EdgeCache;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Laravel\Converse\Models\Thread;
 
 class DeleteAccountAction
 {
@@ -21,6 +23,8 @@ class DeleteAccountAction
         try {
             DB::transaction(function () use ($user): void {
                 DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+                Thread::query()->where('connection', 'web')->where('channel', $user->getMorphClass().':'.$user->getKey())->delete();
+                Activity::query()->where('log_name', 'collection-ai')->where('causer_type', $user->getMorphClass())->where('causer_id', $user->id)->delete();
                 $user->delete();
             });
 

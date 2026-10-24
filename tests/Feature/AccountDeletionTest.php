@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Converse\Models\Thread;
 
 it('requires a verified session and exact username confirmation before deleting an account', function () {
     $this->get('/settings/delete-account')->assertRedirect('/login');
@@ -43,6 +44,8 @@ it('deletes only the confirmed signed-in account and its social data without cha
     SocialNotification::send($other, $user, 'comment', $theirs);
     DB::table('password_reset_tokens')->insert(['email' => $user->email, 'token' => 'old-reset-token', 'created_at' => now()]);
     DB::table('sessions')->insert(['id' => 'other-device', 'user_id' => $user->id, 'payload' => '', 'last_activity' => time()]);
+    $conversation = Thread::query()->create(['bot' => 'collection', 'connection' => 'web', 'external_id' => 'departing-conversation', 'channel' => $user->getMorphClass().':'.$user->id]);
+    $otherConversation = Thread::query()->create(['bot' => 'collection', 'connection' => 'web', 'external_id' => 'remaining-conversation', 'channel' => $other->getMorphClass().':'.$other->id]);
     config(['session.driver' => 'database']);
 
     $this->actingAs($user)->delete('/settings/account', ['confirmation' => 'departing', 'user_id' => $other->id])
@@ -58,6 +61,8 @@ it('deletes only the confirmed signed-in account and its social data without cha
     $this->assertDatabaseCount('social_notifications', 0);
     $this->assertDatabaseMissing('password_reset_tokens', ['email' => $user->email]);
     $this->assertDatabaseMissing('sessions', ['user_id' => $user->id]);
+    $this->assertDatabaseMissing('converse_threads', ['id' => $conversation->id]);
+    $this->assertDatabaseHas('converse_threads', ['id' => $otherConversation->id]);
     $this->get('/shelves/'.$mine->public_id)->assertNotFound();
     $this->get('/shelves/'.$theirs->public_id)->assertOk();
 

@@ -36,6 +36,7 @@ use Illuminate\Support\Str;
  * @property ?CarbonImmutable $discogs_additions_checked_at
  * @property ?string $sync_status
  * @property ?int $sync_total
+ * @property ?int $ai_daily_question_limit
  * @property ?array{page: int, seen: list<int>, total: ?int, pages: ?int, startedAt: int, full?: bool} $discogs_sync_state
  */
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
@@ -44,7 +45,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     use Notifiable;
 
     public const RESERVED_HANDLES = [
-        'about', 'admin', 'api', 'auth', 'build', 'collection', 'collections', 'community', 'demo', 'discogs',
+        'about', 'admin', 'api', 'ask', 'auth', 'build', 'collection', 'collections', 'community', 'demo', 'discogs',
         'email', 'favicon', 'feed', 'fonts', 'friends', 'images', 'index', 'lists', 'login', 'logout',
         'notifications', 'people', 'privacy', 'record', 'register', 'robots', 'settings', 'share',
         'shelves', 'storage', 'terms', 'up',
@@ -86,6 +87,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'collection_imported_at' => 'immutable_datetime', 'last_synced_at' => 'immutable_datetime',
             'discogs_additions_checked_at' => 'immutable_datetime',
             'sync_total' => 'integer',
+            'ai_daily_question_limit' => 'integer',
             'discogs_sync_state' => 'array',
         ];
     }

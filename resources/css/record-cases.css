@@ -1,3 +1,24 @@
+.catalog-record-art {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+}
+.catalog-record-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.cover-gloss {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow:
+        inset 1px 0 #ffffff55,
+        inset -2px 0 #20201633;
+}
+
 .catalog-record-image {
     display: block;
     width: 100%;

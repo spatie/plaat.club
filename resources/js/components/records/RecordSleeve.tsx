@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 
 import { browseHash } from '@/components/records/browseState';
-import '../../../css/record-cases.css';
+import { RecordArtwork } from '@/components/records/RecordArtwork';
 
 import type { CollectionRecordSummary } from '@/components/records/types';
 
@@ -13,17 +13,6 @@ type RecordSleeveProps = {
     record: CollectionRecordSummary;
     transitionRecordId: number | null;
 };
-
-function revealCover(image: HTMLImageElement | null) {
-    if (!image?.complete || image.naturalWidth === 0) return;
-
-    void image.decode().then(
-        () => {
-            image.dataset.loaded = 'true';
-        },
-        () => {},
-    );
-}
 
 export function RecordSleeve({
     browseBasePath = '/',
@@ -51,41 +40,13 @@ export function RecordSleeve({
                     onClick={(event) => onSelect?.(event.currentTarget)}
                     aria-label={`${onSelect ? 'View' : 'Take out'} ${record.displayTitle} by ${record.artist}${record.mediaFormats?.length ? ` (${record.mediaFormats.join(', ')})` : ''}`}
                 >
-                    <span className="catalog-record-art">
-                        <span
-                            className="catalog-record-image"
-                            style={
-                                record.coverPreview
-                                    ? {
-                                          backgroundImage: `url("${record.coverPreview}")`,
-                                      }
-                                    : undefined
-                            }
-                        >
-                            <img
-                                key={record.cover}
-                                alt=""
-                                decoding="async"
-                                draggable={false}
-                                height={600}
-                                loading="lazy"
-                                ref={revealCover}
-                                onLoad={(event) => {
-                                    revealCover(event.currentTarget);
-                                }}
-                                src={record.cover}
-                                width={600}
-                            />
-                        </span>
-                        {record.mediaFormats?.[0] === 'Cassette' && (
-                            <span className="cassette-inlay" aria-hidden="true">
-                                <strong>{record.artist}</strong>
-                                <span>{record.displayTitle}</span>
-                                <small>Cassette</small>
-                            </span>
-                        )}
-                        <span className="cover-gloss" />
-                    </span>
+                    <RecordArtwork
+                        cover={record.cover}
+                        coverPreview={record.coverPreview}
+                        artist={record.artist}
+                        title={record.displayTitle}
+                        mediaFormat={record.mediaFormats?.[0]}
+                    />
                 </SleeveAction>
                 <span className="catalog-record-label">
                     <strong>

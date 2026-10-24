@@ -41,6 +41,7 @@ export type SocialProps = {
     impersonating: boolean;
     csrfToken: string;
     googleEnabled: boolean;
+    aiSearchEnabled: boolean;
     notificationCount: number;
     demoUsers: { email: string; label: string; url: string }[];
     flash: { status: string | null };

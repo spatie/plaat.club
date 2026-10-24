@@ -9,6 +9,14 @@ services:
             --bind-address=127.0.0.1 --port="$PORT" --mysqlx=OFF
             --innodb-buffer-pool-size=128M
         port: 3306
+    postgres:
+        command: >-
+            /usr/lib/postgresql/15/bin/postgres
+            -D "$HOME/.local/share/plaat-postgres"
+            -h 127.0.0.1 -p "$PORT" -k /tmp
+            -c fsync=off -c synchronous_commit=off
+            -c shared_buffers=64MB
+        port: 5432
     web:
         command: >-
             APP_URL="$PUBLIC_URL" ASSET_URL=/

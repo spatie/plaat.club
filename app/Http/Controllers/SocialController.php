@@ -60,6 +60,9 @@ class SocialController extends Controller
             'social/FeedPage' => $request->user()?->hasVerifiedEmail()
                 ? $this->feed($request)
                 : $this->profile($request, $user),
+            'social/CollectionSearchPage' => $request->user()?->hasVerifiedEmail() && config('services.openai.search_enabled')
+                ? app(CollectionSearchController::class)->index($request)
+                : $this->profile($request, $user),
             default => $this->profile($request, $user),
         };
     }
