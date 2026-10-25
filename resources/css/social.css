@@ -230,6 +230,9 @@
     .main-navigation > a[aria-current] {
         font-weight: 600;
     }
+    .main-navigation .nav-label-short {
+        display: none;
+    }
     .guest-navigation {
         grid-column: 2 / -1;
         justify-self: end;
@@ -1640,9 +1643,17 @@
         .main-navigation > a {
             padding-inline: 6px;
             font-size: 15px;
-            white-space: normal;
             text-align: center;
             min-width: 0;
+        }
+        .main-navigation > a[aria-current] {
+            box-shadow: inset 0 -2px 0 var(--ink);
+        }
+        .main-navigation .nav-label-full {
+            display: none;
+        }
+        .main-navigation .nav-label-short {
+            display: inline;
         }
         .page {
             padding: 30px 5vw 60px;

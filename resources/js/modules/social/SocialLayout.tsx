@@ -134,7 +134,12 @@ export function SocialLayout({ children }: { children: ReactNode }) {
                                             : undefined
                                     }
                                 >
-                                    My collection
+                                    <span className="nav-label-full">
+                                        My collection
+                                    </span>
+                                    <span className="nav-label-short">
+                                        Collection
+                                    </span>
                                 </Link>
                                 <Link
                                     href={
@@ -149,7 +154,12 @@ export function SocialLayout({ children }: { children: ReactNode }) {
                                             : undefined
                                     }
                                 >
-                                    Friends’ finds
+                                    <span className="nav-label-full">
+                                        Friends’ finds
+                                    </span>
+                                    <span className="nav-label-short">
+                                        Friends
+                                    </span>
                                 </Link>
                                 <Link
                                     href="/collections"
@@ -168,7 +178,12 @@ export function SocialLayout({ children }: { children: ReactNode }) {
                                             path === '/ask' ? 'page' : undefined
                                         }
                                     >
-                                        Ask your collection
+                                        <span className="nav-label-full">
+                                            Ask your collection
+                                        </span>
+                                        <span className="nav-label-short">
+                                            Ask
+                                        </span>
                                     </Link>
                                 )}
                             </nav>
