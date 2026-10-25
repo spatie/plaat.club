@@ -22,7 +22,7 @@
 <h2>Another collector in the club.</h2>
 <p>Hey Freek, <strong>{{ $user->name }}</strong> just joined Plaat Club.</p>
 <p><strong>Username</strong><br />{{ '@'.$user->handle }}<br /><strong>Email</strong><br /><a href="mailto:{{ $user->email }}">{{ $user->email }}</a></p>
-<p><a class="request-accept" href="{{ $url }}">View user in admin ↗</a></p>
+<p><a class="request-accept" href="{{ $url }}">View user in admin</a></p>
 <p class="request-small">You’re receiving this because a new account was created on Plaat Club.</p>
 </td>
 </tr>

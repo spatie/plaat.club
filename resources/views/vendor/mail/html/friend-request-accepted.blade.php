@@ -22,7 +22,7 @@
 <h2>Your circle just got bigger.</h2>
 <p><strong>{{ $friend->name }}</strong> ({{ '@'.$friend->handle }}) accepted your friend request on Plaat Club.</p>
 @if($url)
-<p><a class="request-accept" href="{{ $url }}">See their collection ↗</a></p>
+<p><a class="request-accept" href="{{ $url }}">See their collection</a></p>
 @endif
 <p class="request-small">Good music is even better when you have someone to share it with.</p>
 </td>

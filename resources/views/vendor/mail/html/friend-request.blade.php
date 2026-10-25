@@ -22,7 +22,7 @@
 <h2>A new face in your crate.</h2>
 <p><strong>{{ $sender->name }}</strong> ({{ '@'.$sender->handle }}) would like to be your friend on Plaat Club.</p>
 <p>Friends can see collections shared with Friends and their new additions. Collections set to Only me stay private.</p>
-<p><a class="request-accept" href="{{ $links['accept'] }}">Accept friend request ↗</a></p>
+<p><a class="request-accept" href="{{ $links['accept'] }}">Accept friend request</a></p>
 <a class="request-decline" href="{{ $links['decline'] }}">Decline friend request</a>
 <p class="request-small">These private links expire in seven days and work without signing in. You’ll confirm your choice on Plaat Club. Don’t forward this email.</p>
 </td>

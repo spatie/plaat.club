@@ -22,7 +22,7 @@
 @endif
 </td>
 <td class="digest-details" valign="top">
-<p class="digest-owner">{{ $record->user->name }} added ↗</p>
+<p class="digest-owner">{{ $record->user->name }} added</p>
 <h2 class="digest-title"><a href="{{ $record->url() }}">{{ $record->payload['displayTitle'] }}</a></h2>
 <p class="digest-artist">{{ $record->payload['artist'] }}</p>
 <p class="digest-meta">@if($record->formats()){{ implode(' / ', $record->formats()) }} · @endif{{ $record->added_at->timezone('Europe/Brussels')->format('j M') }}</p>
@@ -34,7 +34,7 @@
 @endforeach
 <tr>
 <td class="digest-signoff" bgcolor="#292a22">
-<a class="digest-button" href="{{ route('feed') }}">See friends’ additions ↗</a>
+<a class="digest-button" href="{{ route('feed') }}">See friends’ additions</a>
 </td>
 </tr>
 <tr>

@@ -19,7 +19,7 @@
 <td class="request-copy" bgcolor="#fff9e8">
 <h2>Your collection has landed.</h2>
 <p>Hey {{ $collector->name }}, the wait is over! All <strong>{{ $recordCount }} records</strong> from your Discogs collection are now at home on Plaat Club.</p>
-<p><a class="request-accept" href="{{ $url }}">View your collection ↗</a></p>
+<p><a class="request-accept" href="{{ $url }}">View your collection</a></p>
 </td>
 </tr>
 </table>

@@ -65,7 +65,7 @@ it('delivers styled and plain text digests without interpreting collector metada
     expect($message->getSubject())->toBe('Sunday Morning · Plaat Club');
     expect(html_entity_decode(strip_tags($message->getHtmlBody())))->toContain($owner->name, $record->payload['displayTitle']);
     expect($message->getHtmlBody())->toContain('class="inner-body"', '#d84435', '#d9ed92', 'src="cid:', 'Album cover:')
-        ->not->toContain('<script>', '<b>Collector</b>', 'href="https://untrusted.example"', 'Never include this private note');
+        ->not->toContain('<script>', '<b>Collector</b>', 'href="https://untrusted.example"', 'Never include this private note', '↗');
     expect($message->getTextBody())->toContain('Sunday Morning · Plaat Club', $owner->name, $record->payload['displayTitle'], $record->url(), '/settings')
         ->not->toContain('<p', '<table', 'Never include this private note');
     $covers = $message->getAttachments();

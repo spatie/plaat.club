@@ -21,7 +21,7 @@
 <td class="request-copy" bgcolor="#fff9e8">
 <h2>One more spin.</h2>
 <p>Your records. Your people. Your next good find. First, let’s make sure <strong>{{ $email }}</strong> is yours.</p>
-<p><a class="request-accept" href="{{ $url }}">Verify my email ↗</a></p>
+<p><a class="request-accept" href="{{ $url }}">Verify my email</a></p>
 <p class="request-small">This link expires in {{ $expires }} minutes. Didn’t create a Plaat Club account? You can safely ignore this email.</p>
 </td>
 </tr>
