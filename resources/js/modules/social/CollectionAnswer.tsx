@@ -24,6 +24,7 @@ type Release = {
     artist: string;
     year: number | null;
     cover: string;
+    coverPreview?: string | null;
     url: string;
     evidence: string[];
     mediaFormats?: string[];
@@ -327,6 +328,9 @@ function AnswerCard({
                                 <span className="ask-artwork catalog-record-open">
                                     <RecordArtwork
                                         cover={record.cover}
+                                        coverPreview={
+                                            record.coverPreview ?? undefined
+                                        }
                                         artist={record.artist}
                                         title={record.title}
                                         mediaFormat={record.mediaFormats?.[0]}

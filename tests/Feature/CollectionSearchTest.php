@@ -9,6 +9,7 @@ use App\Ai\Tools\ReadRecordLists;
 use App\Ai\Tools\SearchCollections;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\RecordList;
+use App\Support\RecordCoverImages;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -144,6 +145,30 @@ it('finds a musicians participation beyond primary artists and preserves the act
     $records = collectionAnswerCard(askCollection("Which records does Jim O'Rourke appear on?"), 'releases')['items'];
     expect(array_column($records, 'title'))->toBe(['Credit album 0']);
     expect($records[0]['evidence'])->toBe(["Jim O'Rourke — Musician [Band]", "Jim O'Rourke — Mixed By"]);
+});
+
+it('includes saved cover previews in search and list cards without sending them to the model', function () {
+    $viewer = socialUser('cover_viewer');
+    $copy = socialRecord($viewer, 'With preview', instance: 1);
+    $withoutPreview = socialRecord($viewer, 'Without preview', instance: 2);
+    $preview = app(RecordCoverImages::class)->preview($copy->payload['cover']);
+    $copy->release->update(['cover_preview' => $preview]);
+    $list = RecordList::query()->create(['user_id' => $viewer->id, 'name' => 'Preview records', 'visibility' => 'only_me']);
+    $list->records()->attach([$copy->id => ['position' => 0], $withoutPreview->id => ['position' => 1]]);
+    fakeCollectionQuestions([
+        collectionQuestionPlan(),
+        collectionQuestionPlan(['intent' => 'lists', 'list' => collectionListPlan('read', ['target' => 'Preview records'])]),
+    ]);
+    Event::listen(ToolInvoked::class, function (ToolInvoked $event) {
+        expect($event->result)->not->toContain('coverPreview', 'data:image');
+    });
+    $this->actingAs($viewer);
+
+    foreach (['Show my records', 'Show list Preview records'] as $question) {
+        $records = collect(collectionAnswerCard(askCollection($question), 'releases')['items'])->keyBy('title');
+        expect($records['With preview']['coverPreview'])->toBe($preview)
+            ->and($records['Without preview']['coverPreview'])->toBeNull();
+    }
 });
 
 it('answers counts without cards using all matching copies and preserves ordinary searches and privacy', function () {

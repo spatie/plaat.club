@@ -223,6 +223,17 @@ class CollectionSearchBot implements HandlesMessages
     /** @param array<string, mixed> $data */
     protected function cards(array $data): string
     {
+        if ($data['kind'] === 'releases') {
+            $previews = CollectionRecord::query()
+                ->join('releases', 'releases.id', '=', 'collection_records.discogs_release_id')
+                ->whereIn('collection_records.id', array_column($data['items'], 'recordId'))
+                ->pluck('releases.cover_preview', 'collection_records.id');
+
+            $data['items'] = array_map(fn (array $record): array => [
+                ...$record, 'coverPreview' => $previews[$record['recordId']] ?? null,
+            ], $data['items']);
+        }
+
         return "```plaat-card\n".json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n```";
     }
 }

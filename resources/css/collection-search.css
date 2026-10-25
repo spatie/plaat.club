@@ -474,6 +474,12 @@
             transform 240ms ease-out,
             box-shadow 240ms ease-out;
     }
+    .ask-artwork .catalog-record-image img {
+        opacity: 0;
+    }
+    .ask-artwork .catalog-record-image img[data-loaded='true'] {
+        opacity: 1;
+    }
     .ask-artwork > svg {
         position: absolute;
         right: 8px;
