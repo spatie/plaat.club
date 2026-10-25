@@ -51,16 +51,18 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        margin-left: auto;
-        font-size: 12px;
-        padding: 8px;
+        align-self: flex-end;
+        min-height: 44px;
+        margin-bottom: 10px;
+        border: 1px solid var(--ink);
+        background: var(--lilac);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 12px;
         text-decoration: none;
     }
     .ask-help {
         margin-left: auto;
-    }
-    .ask-new-conversation + .ask-help {
-        margin-left: 0;
     }
     .ask-welcome {
         display: flex;
@@ -84,6 +86,8 @@
         flex: 1;
     }
     .ask-composer {
+        display: flex;
+        flex-direction: column;
         position: sticky;
         bottom: var(--ask-keyboard-inset, 0px);
         z-index: 5;
@@ -693,18 +697,6 @@
         }
         .ask-heading h1 {
             font-size: 24px;
-        }
-        .ask-new-conversation span {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            clip-path: inset(50%);
-        }
-        .ask-new-conversation {
-            min-width: 40px;
-            min-height: 40px;
-            justify-content: center;
         }
         .ask-message-assistant {
             margin-right: 0;

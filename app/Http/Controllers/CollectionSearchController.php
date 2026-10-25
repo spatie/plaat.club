@@ -25,7 +25,6 @@ class CollectionSearchController extends Controller
 
         return Inertia::render('social/CollectionSearchPage', [
             'chat' => fn () => Converse::chat('collection', new: $request->boolean('new'))->perPage(30),
-            'compareHandles' => $request->user()->friends()->get()->filter(fn (User $friend): bool => $friend->canViewCollection($request->user()))->pluck('handle')->values(),
             'initialQuestion' => $question,
             'reportedQuestionIds' => Activity::query()->where('log_name', 'collection-ai')->where('causer_type', $request->user()->getMorphClass())
                 ->where('causer_id', $request->user()->id)->where('properties->wrong', true)->get()

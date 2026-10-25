@@ -9,12 +9,10 @@ import '../../../css/collection-search.css';
 
 export function CollectionSearchPage({
     chat,
-    compareHandles,
     initialQuestion,
     reportedQuestionIds,
 }: {
     chat: ChatPayload;
-    compareHandles: string[];
     initialQuestion: string;
     reportedQuestionIds: string[];
 }) {
@@ -146,16 +144,6 @@ export function CollectionSearchPage({
             <div className="ask-page">
                 <header className="ask-heading">
                     <h1>Ask your collection</h1>
-                    {!!messages.length && (
-                        <Link
-                            className="ask-new-conversation"
-                            href="/ask?new=1"
-                            preserveState={false}
-                        >
-                            <Plus size={15} aria-hidden="true" />
-                            <span>New conversation</span>
-                        </Link>
-                    )}
                     <div
                         ref={help}
                         className="ask-help"
@@ -226,11 +214,7 @@ export function CollectionSearchPage({
                                     {[
                                         'Which records did Brian Eno produce?',
                                         'Show my lists',
-                                        ...(compareHandles[0]
-                                            ? [
-                                                  `What do I have in common with ${compareHandles[0]}?`,
-                                              ]
-                                            : []),
+                                        'Compare my collection with a friend',
                                     ].map((example) => (
                                         <button
                                             key={example}
@@ -251,9 +235,6 @@ export function CollectionSearchPage({
                                     notes. Chats are saved here. Suggestions
                                     aren’t audio analysis. List changes need
                                     confirmation.
-                                </p>
-                                <p>
-                                    Enter to send · Shift+Enter for a new line.
                                 </p>
                             </div>
                         )}
@@ -346,6 +327,16 @@ export function CollectionSearchPage({
                     </section>
                 )}
                 <div ref={composer} className="ask-composer">
+                    {!!messages.length && (
+                        <Link
+                            className="ask-new-conversation"
+                            href="/ask?new=1"
+                            preserveState={false}
+                        >
+                            <Plus size={18} aria-hidden="true" />
+                            <span>New conversation</span>
+                        </Link>
+                    )}
                     <form className="ask-form" onSubmit={ask} aria-busy={busy}>
                         <label
                             htmlFor="collection-question"
