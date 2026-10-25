@@ -18,7 +18,17 @@ export function CollectionSearchPage({
 }) {
     const { csrfToken } = usePage<SocialProps>().props;
     const { messages, send, status, error, cancel, clearError } = useChat(
-        chat,
+        {
+            ...chat,
+            offset:
+                chat.offset === 0 &&
+                (Array.isArray(chat.messages)
+                    ? chat.messages
+                    : chat.messages.data
+                ).length === 0
+                    ? null
+                    : chat.offset,
+        },
         {
             csrfToken,
             queue: 'drop',
@@ -315,7 +325,7 @@ export function CollectionSearchPage({
                                     <i />
                                     <i />
                                 </span>
-                                Looking through your collection…
+                                <span className="sr-only">Thinking…</span>
                                 <button
                                     type="button"
                                     onClick={() => void cancel()}
