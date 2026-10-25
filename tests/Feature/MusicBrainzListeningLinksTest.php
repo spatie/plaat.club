@@ -329,6 +329,7 @@ it('retains the resolved release-group ID when adding date metadata', function (
 });
 
 it('finishes after repeated cooldowns without spending the error budget or extending the deadline', function () {
+    $this->freezeTime();
     config(['queue.default' => 'database']);
     Bus::swap(Bus::getFacadeRoot()->dispatcher);
     $release = listeningLinkRelease();
