@@ -9,6 +9,7 @@ import type { ProfileProps, SocialProps } from '@/modules/social/types';
 export function ProfilePage({
     person,
     listCount,
+    recordCount,
     records,
     visible,
     friendsOnly,
@@ -16,7 +17,7 @@ export function ProfilePage({
     groups,
     browse,
 }: ProfileProps) {
-    const { auth, aiSearchEnabled } = usePage<SocialProps>().props;
+    const { auth } = usePage<SocialProps>().props;
     const user = auth.user;
     const owner = user?.id === person.id;
     return (
@@ -28,22 +29,13 @@ export function ProfilePage({
                 }
                 user={owner ? user : null}
             >
-                {!owner && <p>@{person.handle}</p>}
-                {visible && user?.verified && aiSearchEnabled && (
-                    <Link
-                        className="collection-visibility"
-                        href={`/ask?owner=${encodeURIComponent(person.handle)}`}
-                    >
-                        Ask this collection →
-                    </Link>
-                )}
-                {!owner && user?.verified && (
-                    <Link
-                        className="collection-visibility"
-                        href={`/friends/manage?q=${encodeURIComponent(person.handle)}`}
-                    >
-                        Manage friendship
-                    </Link>
+                {(!owner || recordCount !== null) && (
+                    <p>
+                        {!owner && `@${person.handle}`}
+                        {!owner && recordCount !== null && ' · '}
+                        {recordCount !== null &&
+                            `${recordCount.toLocaleString('en-US')} ${recordCount === 1 ? 'record' : 'records'}`}
+                    </p>
                 )}
             </CollectionHeading>
             <CollectionTabs

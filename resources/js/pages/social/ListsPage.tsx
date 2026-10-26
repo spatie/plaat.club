@@ -22,9 +22,6 @@ export function ListsPage({ lists }: { lists: ListPreview[] }) {
         <>
             <Head title="Your lists" />
             <div className="page-heading list-heading">
-                <p className="page-eyebrow">
-                    Your collection, your connections.
-                </p>
                 <h1>A little selection.</h1>
                 <p className="lede">
                     Sunday morning records. Favourite live albums. A few records

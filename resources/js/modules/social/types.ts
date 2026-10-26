@@ -82,6 +82,7 @@ export type AuthProps = {
 export type ProfileProps = {
     person: Person;
     listCount: number;
+    recordCount: number | null;
     visible: boolean;
     friendsOnly: boolean;
     friendship: FriendsProps['connections'][number] | null;

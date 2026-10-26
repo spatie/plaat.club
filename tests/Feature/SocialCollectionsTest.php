@@ -109,11 +109,14 @@ it('pages a large collection and jumps across sections without filtering other a
     }
     $first = $this->get('/large_shelf?mode=artist')->assertOk();
     expect($first->inertiaProps('records.data'))->toHaveCount(36)
+        ->and($first->inertiaProps('recordCount'))->toBe(80)
         ->and($first->inertiaProps('records.total'))->toBe(80)
         ->and($first->inertiaProps('groups'))->toBe([
             ['name' => 'Alpha', 'count' => 40, 'offset' => 0],
             ['name' => 'Zulu', 'count' => 40, 'offset' => 40],
         ]);
+    $this->get('/large_shelf?mode=artist&q=Album%2080')->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('recordCount', 80)->where('records.total', 1));
     $jump = $this->get('/large_shelf?mode=artist&group=Zulu')->assertOk();
     expect($jump->inertiaProps('records.current_page'))->toBe(2)
         ->and(array_unique(array_column($jump->inertiaProps('records.data'), 'section')))->toBe([0 => 'Alpha', 4 => 'Zulu']);
@@ -387,7 +390,7 @@ it('enforces the full collection visibility matrix on profiles and record pages'
     $elsewhere = $this->get('/collections?record='.$record->public_id);
     if ($allowed) {
         $profile->assertOk()->assertSee('Private Test Album')->assertInertia(fn (Assert $page) => $page
-            ->where('person.name', 'Owner')->where('person.handle', 'owner')->where('visible', true)->has('records.data', 1));
+            ->where('person.name', 'Owner')->where('person.handle', 'owner')->where('visible', true)->where('recordCount', 1)->has('records.data', 1));
         $response->assertOk()->assertSee('Private Test Album');
         $readable->assertOk()->assertInertia(fn (Assert $page) => $page->where('recordOverlay.record.id', $record->id));
         $cover->assertOk()->assertHeader('Content-Type', 'image/jpeg');
@@ -408,7 +411,7 @@ it('enforces the full collection visibility matrix on profiles and record pages'
             }
         } else {
             $profile->assertOk()->assertInertia(fn (Assert $page) => $page
-                ->where('visible', false)->where('records', null)->where('friendsOnly', $visibility === 'friends'));
+                ->where('visible', false)->where('records', null)->where('recordCount', null)->where('friendsOnly', $visibility === 'friends'));
             foreach ([$response, $cupboard, $elsewhere, $readable] as $denied) {
                 $denied->assertRedirect('/owner')->assertDontSee('Private Test Album');
             }

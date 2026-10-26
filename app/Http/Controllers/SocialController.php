@@ -34,6 +34,7 @@ class SocialController extends Controller
         return Inertia::render('social/ProfilePage', [
             'person' => SocialData::person($user), 'visible' => $visible,
             'listCount' => RecordList::visibleTo($request->user())->where('user_id', $user->id)->count(),
+            'recordCount' => fn () => $visible ? $user->records()->count() : null,
             'friendsOnly' => $user->visibility === 'friends',
             'friendship' => ! $visible && $request->user() ? Friendship::query()->where([
                 'user_low' => min($request->user()->id, $user->id),
