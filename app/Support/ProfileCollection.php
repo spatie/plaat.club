@@ -196,11 +196,11 @@ class ProfileCollection
             THEN CAST(records.browse_original_year AS {$text}) ELSE COALESCE(dates.original_release_date, CAST(records.browse_original_year AS {$text})) END";
         $rows = $query->addSelect('records.browse_title as title')->selectRaw("{$date} AS original_date")->get()->all();
         $positions = array_flip(array_column($groups, 'name'));
-        usort($rows, function ($first, $second) use ($positions, $mode): int {
+        usort($rows, function ($first, $second) use ($positions): int {
             $groups = $positions[$this->sectionName($first->section)] <=> $positions[$this->sectionName($second->section)];
-            $dates = ($first->original_date ?? ($mode === 'artist' ? '' : '9999')) <=> ($second->original_date ?? ($mode === 'artist' ? '' : '9999'));
+            $dates = ($second->original_date ?? '') <=> ($first->original_date ?? '');
 
-            return $groups ?: ($mode === 'artist' ? -$dates : $dates)
+            return $groups ?: $dates
                 ?: strnatcasecmp($first->title, $second->title) ?: $first->copyId <=> $second->copyId;
         });
 

@@ -266,7 +266,7 @@ it('keeps natural title ordering and current effective dates when browsing artis
     $decades = $this->get('/release_order?mode=decade')->assertOk();
     expect(array_column($decades->inertiaProps('groups'), 'name'))->toBe(['1980s', '1970s', 'Unknown year'])
         ->and(array_column($decades->inertiaProps('records.data'), 'displayTitle'))
-        ->toBe(['Decade boundary', 'Stored date', 'Album 2', 'Album 10', 'Conflicting date', 'Unknown date']);
+        ->toBe(['Stored date', 'Decade boundary', 'Conflicting date', 'Album 2', 'Album 10', 'Unknown date']);
 
     RecordReleaseDate::query()->whereKey(900002)->update(['original_release_date' => '1963']);
     $this->get('/release_order?mode=decade&q=1963')->assertOk()

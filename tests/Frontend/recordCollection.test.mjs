@@ -141,11 +141,11 @@ await test('artist records run newest first, with unknown dates last', () => {
         recordsInGroup(albums, 'decade', '1970s').map(
             (album) => album.originalYear,
         ),
-        [1970, 1979],
+        [1979, 1970],
     );
     assert.deepEqual(
         recordsByYear(albums).map((section) => section.year),
-        ['1969', '1970', '1979', '1980', 'Unknown year'],
+        ['1980', '1979', '1970', '1969', 'Unknown year'],
     );
 });
 
@@ -187,7 +187,7 @@ await test('decades sort original releases by month and day without using the pr
         recordsInGroup(albums, 'decade', '1970s').map(
             (album) => album.originalReleaseDate,
         ),
-        ['1970', '1970-02', '1970-02-01', '1970-02-10', '1970-11-27'],
+        ['1970-11-27', '1970-02-10', '1970-02-01', '1970-02', '1970'],
     );
 });
 

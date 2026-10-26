@@ -112,14 +112,13 @@ export function recordsInGroup(
     return mode === 'decade'
         ? matching.sort(
               (first, second) =>
-                  (first.originalYear ?? Infinity) -
-                      (second.originalYear ?? Infinity) ||
+                  (second.originalYear ?? 0) - (first.originalYear ?? 0) ||
                   (
-                      first.originalReleaseDate ??
-                      String(first.originalYear ?? '')
-                  ).localeCompare(
                       second.originalReleaseDate ??
-                          String(second.originalYear ?? ''),
+                      String(second.originalYear ?? '')
+                  ).localeCompare(
+                      first.originalReleaseDate ??
+                          String(first.originalYear ?? ''),
                   ) ||
                   first.title.localeCompare(second.title),
           )
@@ -140,8 +139,7 @@ export function recordsByYear(
         .map(([year, entries]) => ({ year, records: entries }))
         .sort(
             (first, second) =>
-                (Number(first.year) || Infinity) -
-                (Number(second.year) || Infinity),
+                (Number(second.year) || 0) - (Number(first.year) || 0),
         );
 }
 
