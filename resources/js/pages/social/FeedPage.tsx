@@ -94,7 +94,6 @@ export function FeedPage({ friends, importRecords }: FeedProps) {
                         Your friends’ latest five releases, most recently added
                         first.
                     </p>
-                    <Link href="/friends/manage">Manage friends</Link>
                 </div>
             )}
             {!starting && (
