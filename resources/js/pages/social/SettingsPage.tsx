@@ -21,7 +21,7 @@ export function SettingsPage() {
         <>
             <Head title="Your preferences" />
             <div className="page-heading">
-                <h1>Make it yours.</h1>
+                <h1>Settings</h1>
             </div>
             <div className="settings-layout">
                 <section className="panel settings-sheet">

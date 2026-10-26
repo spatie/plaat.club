@@ -60,7 +60,6 @@ export function FriendsPage({ connections, people, query }: FriendsProps) {
         <>
             <Head title="Your friends" />
             <div className="page-heading">
-                <p className="page-eyebrow">Friends</p>
                 <h1>Your people.</h1>
                 <Link className="button" href="/friends/invite">
                     Invite a friend
