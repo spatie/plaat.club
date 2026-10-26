@@ -22,19 +22,11 @@ export function ListsPage({ lists }: { lists: ListPreview[] }) {
         <>
             <Head title="Your lists" />
             <div className="page-heading list-heading">
-                <h1>A little selection.</h1>
-                <p className="lede">
-                    Sunday morning records. Favourite live albums. A few records
-                    worth putting together.
-                </p>
+                <h1>Your lists</h1>
             </div>
             <CollectionTabs active="lists" listCount={lists.length} />
-            <section aria-labelledby="your-lists-title">
+            <section aria-label="Your lists">
                 <div className="section-heading lists-section-heading">
-                    <h2 id="your-lists-title">
-                        Your lists{' '}
-                        <span className="muted">({lists.length})</span>
-                    </h2>
                     <button
                         className="button"
                         type="button"
@@ -48,11 +40,7 @@ export function ListsPage({ lists }: { lists: ListPreview[] }) {
                 </div>
                 {lists.length === 0 ? (
                     <div className="list-empty">
-                        <h3>Big collection. Small stories.</h3>
-                        <p>
-                            Put a handful of favourites together. You can change
-                            your list any time.
-                        </p>
+                        <h2>No lists yet</h2>
                     </div>
                 ) : (
                     <div className="collection-previews list-cards">

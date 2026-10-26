@@ -61,9 +61,6 @@
         flex-wrap: wrap;
         margin-bottom: 24px;
     }
-    .lists-section-heading h2 {
-        font-size: clamp(32px, 4vw, 44px);
-    }
     .list-create-dialog {
         position: fixed;
         inset: 0;
