@@ -63,27 +63,6 @@ export type CollectionRecord = {
     tracks: CollectionTrack[];
 };
 
-export type RecordCollection = {
-    records: CollectionRecordSummary[];
-};
-
-export type SharedRecord = {
-    instanceId: number;
-    title: string;
-    artist: string;
-    description: string;
-    url: string;
-    image: string;
-};
-
-export type SocialMeta = {
-    title: string;
-    description: string;
-    url: string;
-    image: string;
-    imageAlt: string;
-};
-
 export type CollectionMode = 'recent' | 'decade' | 'genre' | 'artist';
 export type CollectionGroup = { name: string; count: number };
 

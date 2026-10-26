@@ -1,10 +1,6 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createElement, type ComponentType, type ReactNode } from 'react';
 
-import { initializeRecordHistory } from '@/lib/record-history';
-
-if (typeof window !== 'undefined') initializeRecordHistory();
-
 void createInertiaApp({
     resolve: async (name) => {
         const pages = import.meta.glob('./pages/**/*.tsx');
@@ -20,8 +16,6 @@ void createInertiaApp({
                 await import('@/modules/social/SocialLayout');
             component.layout = (page) =>
                 createElement(SocialLayout, null, page);
-        } else {
-            await import('../css/app.css');
         }
         return component;
     },

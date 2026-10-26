@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use App\Support\RecordCollection;
 use App\Support\RecordShareImage;
 use App\Support\StoredShareImages;
@@ -8,29 +9,14 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
-it('lets guests browse the whole collection without downloading every track link', function () {
-    $this->get(route('collection'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('welcome')
-            ->where('sharedRecord', null)
-            ->where('social.title', 'Plaat Club')
-            ->where('social.imageAlt', 'Plaat Club: a wooden shelf of album sleeves beneath a vintage turntable and speakers')
-            ->has('collection.records', 850)
-            ->where('collection.records.0.artist', 'George Harrison')
-            ->where('collection.records.0.originalYear', 1970)
-            ->where('collection.records.0.year', 2021)
-            ->where('collection.records.4.artist', 'Elbow')
-            ->where('collection.records.1.title', 'Shebang')
-            ->where('collection.records.0.trackTitles.1', 'My Sweet Lord')
-            ->missing('collection.records.0.tracks')
-            ->where('collection.records.1.appleMusicUrl', 'https://music.apple.com/be/album/shebang/1630427079')
-            ->where('collection.records.1.spotifyUrl', 'https://open.spotify.com/album/1khpMdVH3EXz5RWt4WRAbg')
-            ->where('collection.records.3.spotifySearch', true)
-            ->missing('collection.records.0.discogsUrl')
-            ->missing('collection.records.0.coverSource')
-            ->missing('collection.records.0.catalogNumber')
-        );
+it('redirects the legacy collection to the current profile layout', function () {
+    $owner = User::freek();
+    socialRecord($owner, 'Current shelf record');
+
+    $this->get(route('collection'))->assertStatus(301)->assertRedirect(route('profile', $owner->handle));
+    $this->followingRedirects()->get(route('collection'))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('social/ProfilePage')
+            ->where('records.data.0.displayTitle', 'Current shelf record'));
 });
 
 it('provides track positions when opening a record', function () {
@@ -67,39 +53,17 @@ it('does not route invalid collection copy ids', function () {
     $this->getJson('/api/records/not-a-record')->assertNotFound();
 });
 
-it('renders social metadata for a shared record', function () {
-    $this->get(route('recordShare', ['instanceId' => legacyRecordPublicId(2189134863), 'slug' => 'oren-ambarchi-shebang']))
-        ->assertOk()
-        ->assertSee('property="og:site_name" content="Plaat Club"', false)
-        ->assertSee('property="og:title" content="Shebang by Oren Ambarchi"', false)
-        ->assertSee('Shebang by Oren Ambarchi (2022), from Freek&#039;s vinyl collection.', false)
-        ->assertSee('name="twitter:description"', false)
-        ->assertSee('property="og:locale" content="en_GB"', false)
-        ->assertSee('name="twitter:site" content="@freekmurze"', false)
-        ->assertSee('name="theme-color" content="#292a22"', false)
-        ->assertSee('name="twitter:card" content="summary_large_image"', false)
-        ->assertSee('property="og:image:type" content="image/jpeg"', false)
-        ->assertSee('property="og:image" content="'.storedShareImageUrl('share/records/2189134863-'), false)
-        ->assertSee('name="twitter:image" content="'.storedShareImageUrl('share/records/2189134863-'), false);
-});
+it('redirects legacy record URLs to the current record view', function (string $slug) {
+    $collection = app(RecordCollection::class);
+    $collection->store($collection->snapshot()[1]);
+    $record = User::freek()->records()->firstOrFail();
 
-it('passes the shared record to the page so it opens immediately', function () {
-    $path = '/record/'.legacyRecordPublicId(2189134863).'/oren-ambarchi-shebang';
-
-    $this->get($path)
-        ->assertSee('property="og:url" content="'.url($path).'"', false)
-        ->assertSee('rel="canonical" href="'.url($path).'"', false)
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('sharedRecord.instanceId', 2189134863)
-            ->where('sharedRecord.title', 'Shebang')
-            ->where('sharedRecord.url', url($path))
-            ->where('collection.records.1.shareUrl', $path));
-});
-
-it('redirects outdated or missing record slugs to the canonical url', function (string $slug) {
-    $path = '/record/'.legacyRecordPublicId(2189134863);
-    $this->get($path.$slug)->assertRedirect($path.'/oren-ambarchi-shebang')->assertStatus(301);
+    $this->get('/record/'.$record->public_id.$slug)->assertRedirect($record->url())->assertStatus(301);
+    $this->followingRedirects()->get('/record/'.$record->public_id.$slug)->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('social/ProfilePage')
+            ->where('recordOverlay.record.payload.title', 'Shebang'));
 })->with([
+    'current slug' => ['/oren-ambarchi-shebang'],
     'outdated slug' => ['/old-album-title'],
     'missing slug' => [''],
 ]);
@@ -224,48 +188,10 @@ it('stores a small preview image for the collection and redirects to it', functi
 });
 
 it('renders each share image only once', function () {
-    $this->get(route('collection'))->assertOk();
+    $this->get(route('collectionShareImage'))->assertRedirect();
     $this->get(route('collectionShareImage'))->assertRedirect();
 
     expect(Storage::disk('public')->allFiles('share'))->toHaveCount(1);
-});
-
-it('renders social metadata for the original collection', function () {
-    $home = route('collection');
-
-    $this->get(route('collection'))
-        ->assertSee('<title>Plaat Club</title>', false)
-        ->assertSee('property="og:site_name" content="Plaat Club"', false)
-        ->assertSee('property="og:type" content="website"', false)
-        ->assertSee('A lifetime of digging, one shelf at a time.')
-        ->assertSee('name="twitter:description"', false)
-        ->assertSee('property="og:locale" content="en_GB"', false)
-        ->assertSee('name="twitter:site" content="@freekmurze"', false)
-        ->assertSee('name="theme-color" content="#292a22"', false)
-        ->assertSee('property="og:image" content="'.storedShareImageUrl('share/collection-'), false)
-        ->assertSee('name="twitter:image" content="'.storedShareImageUrl('share/collection-'), false)
-        ->assertSee('property="og:image:type" content="image/jpeg"', false)
-        ->assertSee("rel=\"canonical\" href=\"{$home}\"", false);
-});
-
-it('describes the collection with structured data', function () {
-    $schema = structuredData($this->get(route('collection'))->assertOk()->getContent());
-
-    expect($schema['@context'])->toBe('https://schema.org')
-        ->and($schema['@type'])->toBe('CollectionPage')
-        ->and($schema['isPartOf']['name'])->toBe('Plaat Club')
-        ->and($schema['author']['name'])->toBe('Freek Van der Herten');
-});
-
-it('describes a shared album with structured data', function () {
-    $html = $this->get('/record/'.legacyRecordPublicId(2189134863).'/oren-ambarchi-shebang')->assertOk()->getContent();
-
-    $schema = structuredData($html);
-
-    expect($schema['@context'])->toBe('https://schema.org')
-        ->and($schema['@type'])->toBe('MusicAlbum')
-        ->and($schema['name'])->toBe('Shebang')
-        ->and($schema['byArtist']['name'])->toBe('Oren Ambarchi');
 });
 
 it('reads the persisted collection once records are stored', function () {
@@ -274,11 +200,11 @@ it('reads the persisted collection once records are stored', function () {
 
     $collection->store($record);
 
-    $this->get(route('collection'))->assertInertia(fn (Assert $page) => $page
-        ->component('welcome')
-        ->has('collection.records', 1)
-        ->where('collection.records.0.instanceId', $record['instanceId'])
-        ->missing('collection.records.0.tracks'));
+    $this->followingRedirects()->get(route('collection'))->assertInertia(fn (Assert $page) => $page
+        ->component('social/ProfilePage')
+        ->has('records.data', 1)
+        ->where('records.data.0.instanceId', $record['instanceId'])
+        ->missing('records.data.0.tracks'));
 });
 
 it('shows collection changes immediately when a record is stored', function () {
@@ -314,12 +240,4 @@ function expectStoredShareImage(string $url): void
         ->and($width)->toBe(1200)
         ->and($height)->toBe(630)
         ->and(strlen($bytes))->toBeLessThan(150 * 1024);
-}
-
-/** @return array<string, mixed> */
-function structuredData(string $html): array
-{
-    preg_match('/<script[^>]+type="application\/ld\+json"[^>]*>(.*?)<\/script>/s', $html, $matches);
-
-    return json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR);
 }

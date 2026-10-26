@@ -21,7 +21,7 @@ Route::post('admin/impersonation/stop', StopImpersonationController::class)
 
 Route::get('/', HomeController::class)->middleware([PrivateResponse::class, EnsureCollectionAccess::class])->name('home');
 
-// Public artwork and Freek's immutable-public legacy routes need no session.
+// Public artwork and legacy redirects need no session.
 Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])->group(function () {
 
     Route::middleware('throttle:shareImages')->group(function () {

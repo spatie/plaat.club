@@ -725,10 +725,11 @@ it('expires read and unread notifications at seven days and prunes only expired 
 it('isolates legacy collection copies, snapshot fallback, and all legacy URLs from other owners', function () {
     $owner = socialUser('private');
     $record = socialRecord($owner, 'Never leak me', instance: 2189134863);
-    $this->get('/collection')->assertOk()->assertDontSee('Never leak me');
+    $this->get('/collection')->assertStatus(301)->assertRedirect(route('profile', User::freek()->handle));
     $publicId = legacyRecordPublicId(2189134863);
     $this->getJson('/api/records/'.$publicId)->assertJsonPath('title', 'Shebang');
-    $this->get('/record/'.$publicId.'/oren-ambarchi-shebang')->assertOk()->assertDontSee('Never leak me');
+    $this->get('/record/'.$publicId.'/oren-ambarchi-shebang')->assertNotFound();
+    $this->get('/record/'.$record->public_id)->assertNotFound();
     $this->get('/record/'.$publicId.'/image.png')->assertRedirect();
     $this->get('/share/image.png')->assertRedirect();
     socialRecord($owner, 'Unknown legacy copy', instance: 999999);

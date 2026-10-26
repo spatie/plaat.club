@@ -44,6 +44,8 @@ it('rejects MusicBrainz release groups by a different artist', function () {
 });
 
 it('enriches pages with stored original dates without overwriting the pressing date', function () {
+    $collection = app(RecordCollection::class);
+    $collection->store($collection->snapshot()[0]);
     RecordReleaseDate::query()->create([
         'discogs_release_id' => 19772260,
         'original_release_date' => '1970-11-27',
@@ -51,9 +53,9 @@ it('enriches pages with stored original dates without overwriting the pressing d
         'pressing_release_date' => '2021-08-06',
     ]);
 
-    $this->get(route('collection'))->assertInertia(fn (Assert $page) => $page
-        ->where('collection.records.0.originalReleaseDate', '1970-11-27')
-        ->where('collection.records.0.originalYear', 1970));
+    $this->followingRedirects()->get(route('collection'))->assertInertia(fn (Assert $page) => $page
+        ->where('records.data.0.originalReleaseDate', '1970-11-27')
+        ->where('records.data.0.originalYear', 1970));
 
     $publicId = collect(app(RecordCollection::class)->records())->firstWhere('instanceId', 2189134981)['publicId'];
     $this->getJson(route('recordDetails', ['instanceId' => $publicId]))

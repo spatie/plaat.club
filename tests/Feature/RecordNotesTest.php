@@ -114,6 +114,6 @@ it('excludes private notes from serialization and both notes from the legacy pub
     expect($record->fresh()->toArray())->not->toHaveKey('private_note');
     expect($record->fresh()->toJson())->not->toContain('unique-private-note');
     $this->getJson("/api/records/{$record->public_id}")->assertOk()->assertDontSee('unique-private-note')->assertDontSee('unique-shared-note');
-    $this->followingRedirects()->get("/record/{$record->public_id}")->assertOk()->assertDontSee('unique-private-note')->assertDontSee('unique-shared-note');
+    $this->followingRedirects()->get("/record/{$record->public_id}")->assertOk()->assertDontSee('unique-private-note')->assertSee('unique-shared-note');
     expect(CollectionRecord::query()->findOrFail($record->id)->private_note)->toBe('unique-private-note');
 });

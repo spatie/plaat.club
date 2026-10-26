@@ -17,7 +17,6 @@ export default defineConfig({
     plugins: lazyPlugins(() => [
         laravel({
             input: [
-                'resources/css/app.css',
                 'resources/css/social.css',
                 'resources/css/filament/admin/theme.css',
                 'resources/js/app.tsx',
@@ -83,7 +82,7 @@ export default defineConfig({
             'resources/views/mail/*',
         ],
         sortTailwindcss: {
-            stylesheet: 'resources/css/app.css',
+            stylesheet: 'resources/css/social.css',
         },
     },
 });

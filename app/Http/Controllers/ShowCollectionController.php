@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\CollectionPage;
-use Inertia\Response;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 
 class ShowCollectionController extends Controller
 {
-    public function __invoke(CollectionPage $page): Response
+    public function __invoke(): RedirectResponse
     {
-        return $page->render();
+        return redirect()->route('profile', User::freek()->handle, 301);
     }
 }

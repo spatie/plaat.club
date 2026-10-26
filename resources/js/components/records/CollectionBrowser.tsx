@@ -11,7 +11,10 @@ import type { Ref } from 'react';
 import { flushSync } from 'react-dom';
 
 import { animateCollectionChange } from '@/components/records/animateCollectionChange';
-import type { BrowseState } from '@/components/records/browseState';
+import type {
+    BrowseState,
+    BrowseUpdate,
+} from '@/components/records/browseState';
 import { collectionView } from '@/components/records/collection';
 import { CollectionControls } from '@/components/records/CollectionControls';
 import { CollectionIndex } from '@/components/records/CollectionIndex';
@@ -21,7 +24,6 @@ import type {
     CollectionMode,
     CollectionRecordSummary,
 } from '@/components/records/types';
-import type { BrowseUpdate } from '@/components/records/useBrowseNavigation';
 
 export type CollectionBrowserHandle = {
     /** Shows every record by an artist, then moves scroll and focus to the result. */

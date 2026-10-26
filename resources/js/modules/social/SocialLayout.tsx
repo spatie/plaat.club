@@ -1,7 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
-import { legacyCollectionUrl } from '@/lib/record-history';
 import { AccountMenu } from '@/modules/social/AccountMenu';
 import { isSettingUpCollection } from '@/modules/social/collectionSetup';
 import { NotificationsPopover } from '@/modules/social/NotificationsPopover';
@@ -71,12 +70,6 @@ export function SocialLayout({ children }: { children: ReactNode }) {
             'social/PrivacyPage': 'legal-page',
             'social/TermsPage': 'legal-page',
         }[component] ?? '';
-
-    useEffect(() => {
-        if (path !== '/' && path !== '/friends') return;
-        const destination = legacyCollectionUrl(window.location.hash);
-        if (destination) window.location.replace(destination);
-    }, [path]);
 
     return (
         <div ref={layoutRef} className={`social-app ${pageClass}`}>

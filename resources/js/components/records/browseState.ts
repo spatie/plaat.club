@@ -7,6 +7,10 @@ export type BrowseState = {
     visibleCount: number;
 };
 
+export type BrowseUpdate =
+    | Partial<BrowseState>
+    | ((current: BrowseState) => BrowseState);
+
 export function browseFromHash(hash: string): BrowseState {
     const params = new URLSearchParams(hash.replace(/^#/, ''));
     const mode =
@@ -27,17 +31,4 @@ export function browseHash(browse: BrowseState): string {
     if (browse.query) params.set('q', browse.query);
     const fragment = params.toString();
     return fragment ? `#${fragment}` : '';
-}
-
-export function restoreBrowseState(
-    current: BrowseState,
-    destination: BrowseState,
-    saved?: BrowseState,
-): BrowseState {
-    const destinationHash = browseHash(destination);
-    // Inertia's scroll tracking can replace custom history fields. Keep a mounted shelf intact when closing its record.
-    if (browseHash(current) === destinationHash) return current;
-    if (saved && browseHash(saved) === destinationHash)
-        return { ...destination, visibleCount: saved.visibleCount };
-    return destination;
 }

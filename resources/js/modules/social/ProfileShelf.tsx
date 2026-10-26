@@ -4,6 +4,7 @@ import {
     browseFromHash,
     browseHash,
     type BrowseState,
+    type BrowseUpdate,
 } from '@/components/records/browseState';
 import { CollectionBrowser } from '@/components/records/CollectionBrowser';
 import { CollectionControls } from '@/components/records/CollectionControls';
@@ -12,7 +13,6 @@ import { formatReleaseDate } from '@/components/records/collection';
 import { motionScrollBehavior } from '@/components/records/recordMotion';
 import { RecordSleeve } from '@/components/records/RecordSleeve';
 import type { CollectionRecordSummary } from '@/components/records/types';
-import type { BrowseUpdate } from '@/components/records/useBrowseNavigation';
 import { RecordRoom } from '@/modules/social/RecordRoom';
 import { RecordOverlayContext } from '@/modules/social/RecordOverlay';
 import type { ProfileProps, SocialProps } from '@/modules/social/types';
