@@ -138,6 +138,26 @@ it('signs in by Google subject without changing profile email or confusing anoth
     Notification::assertNothingSent();
 });
 
+it('remembers new and existing Google accounts after the session expires', function (bool $existing) {
+    if ($existing) {
+        socialUser('collector')->update(['google_id' => 'google-sub-123']);
+    }
+
+    $this->get(route('google.redirect'));
+    $cookieName = auth()->guard('web')->getRecallerName();
+    $response = $this->get(route('google.callback', ['state' => session('state'), 'code' => 'valid-code']));
+    $response->assertRedirect('/')->assertCookieNotExpired($cookieName);
+    $cookie = $response->getCookie($cookieName);
+    expect($cookie->getExpiresTime())->toBeGreaterThan(now()->addYear()->timestamp);
+    $user = User::query()->where('google_id', 'google-sub-123')->firstOrFail();
+
+    session()->flush();
+    auth()->forgetGuards();
+    $this->withCookie($cookieName, $cookie->getValue())->get('/settings')->assertOk();
+    $this->assertAuthenticatedAs($user);
+    expect(auth()->guard('web')->viaRemember())->toBeTrue();
+})->with([false, true]);
+
 it('verifies an existing Google account only when Google verifies its stored email', function (bool $sameEmail) {
     $linked = socialUser('linked');
     $linked->update(['google_id' => 'google-sub-123', 'email_verified_at' => null]);

@@ -30,7 +30,7 @@ class AccountController extends Controller
 
         $user = User::query()->create($data);
         event(new Registered($user));
-        Auth::login($user);
+        Auth::login($user, remember: true);
         $request->session()->regenerate();
 
         return redirect('/verify-email');
@@ -40,7 +40,7 @@ class AccountController extends Controller
     {
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string']]);
         $data['email'] = strtolower($data['email']);
-        if (! Auth::attempt($data)) {
+        if (! Auth::attempt($data, remember: true)) {
             throw ValidationException::withMessages(['email' => 'The supplied credentials are not correct.']);
         }
         $request->session()->regenerate();

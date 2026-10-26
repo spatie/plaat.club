@@ -184,6 +184,29 @@ it('registers with only an email and password and lets the username change in se
     ])->assertSessionHasErrors('handle');
 });
 
+it('remembers password logins and registrations until the user logs out', function (string $path) {
+    Notification::fake();
+    $user = $path === '/login' ? socialUser('remembered') : null;
+    $cookieName = auth()->guard('web')->getRecallerName();
+    $response = $this->post($path, ['email' => 'remembered@example.test', 'password' => 'a-long-demo-password']);
+    $response->assertRedirect()->assertCookieNotExpired($cookieName);
+    $cookie = $response->getCookie($cookieName);
+    expect($cookie->getExpiresTime())->toBeGreaterThan(now()->addYear()->timestamp);
+    $user ??= User::query()->where('email', 'remembered@example.test')->firstOrFail();
+
+    session()->flush();
+    auth()->forgetGuards();
+    $this->withCookie($cookieName, $cookie->getValue())->get('/settings')
+        ->assertStatus($path === '/login' ? 200 : 302);
+    $this->assertAuthenticatedAs($user);
+    expect(auth()->guard('web')->viaRemember())->toBeTrue();
+
+    $this->post('/logout')->assertRedirect('/')->assertCookieExpired($cookieName);
+    auth()->forgetGuards();
+    $this->get('/settings')->assertRedirect('/login');
+    $this->assertGuest();
+})->with(['/login', '/register']);
+
 it('opens the signed-in collection by default after login while preserving verification', function (bool $verified, string $destination) {
     $user = socialUser('defaultcollection');
     if (! $verified) {
