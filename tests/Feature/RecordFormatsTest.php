@@ -15,6 +15,57 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 
+it('classifies related physical formats while preserving their original labels', function (string $name, array $expected) {
+    $mapper = app(DiscogsRecordMapper::class);
+    $metadata = $mapper->formatMetadata(['formats' => [['name' => $name, 'qty' => '2', 'descriptions' => ['Album'], 'text' => 'Limited']]]);
+
+    expect($metadata)->toBe(['format' => "2 × {$name}", 'edition' => 'Album, Limited', 'mediaFormats' => $expected])
+        ->and($mapper->mediaFormats("2x{$name}"))->toBe($expected);
+})->with([
+    'CD' => ['CD', ['CD']],
+    'recordable CD' => ['CDr', ['CD']],
+    'hyphenated CD-R' => ['CD-R', ['CD']],
+    'rewritable CD' => ['CD-RW', ['CD']],
+    'super audio CD' => ['SACD', ['CD']],
+    'CD video' => ['CDV', ['CD']],
+    'vinyl' => ['Vinyl', ['Vinyl']],
+    'acetate' => ['Acetate', ['Vinyl']],
+    'flexi' => ['Flexi-disc', ['Vinyl']],
+    'lathe cut' => ['Lathe Cut', ['Vinyl']],
+    'shellac' => ['Shellac', ['Vinyl']],
+    'cassette' => ['Cassette', ['Cassette']],
+    'digital compact cassette' => ['DCC', ['Cassette']],
+    'digital audio tape' => ['DAT', ['Cassette']],
+    'microcassette' => ['Microcassette', ['Cassette']],
+    'NT cassette' => ['NT Cassette', ['Cassette']],
+    'DC international' => ['DC-International', ['Cassette']],
+    'elcaset' => ['Elcaset', ['Cassette']],
+    'DVD' => ['DVD', []],
+    'recordable DVD' => ['DVDr', []],
+    'blu-ray' => ['Blu-ray', []],
+    'file' => ['File', []],
+    'box set' => ['Box Set', []],
+    '8-track cartridge' => ['8-Track Cartridge', []],
+]);
+
+it('corrects stored media families without changing other metadata or copy activity', function () {
+    $record = socialRecord(socialUser('correctformats'));
+    app(StoreCollectionRecordAction::class)->execute($record, ['payload' => [...$record->payload,
+        'format' => '2 × CDr, Vinyl, Cassette', 'mediaFormats' => ['Vinyl', 'Cassette'],
+    ], 'shared_note' => 'My edition', 'private_note' => 'Gift']);
+    $copyBefore = DB::table('collection_records')->first();
+    $releaseBefore = DB::table('releases')->first();
+
+    $migration = require database_path('migrations/2026_10_26_120000_correct_release_media_formats.php');
+    $migration->up();
+    $migration->up();
+
+    expect($record->fresh()->formats())->toBe(['CD', 'Vinyl', 'Cassette'])
+        ->and(DB::table('collection_records')->first())->toEqual($copyBefore)
+        ->and(DB::table('releases')->first()->updated_at)->toBe($releaseBefore->updated_at)
+        ->and($record->fresh()->payload)->toEqual([...$record->payload, 'mediaFormats' => ['CD', 'Vinyl', 'Cassette']]);
+});
+
 it('imports mixed bundles and unknown media without losing descriptions', function () {
     Http::preventStrayRequests();
     Sleep::fake();

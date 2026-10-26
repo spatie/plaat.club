@@ -6,6 +6,13 @@ class DiscogsRecordMapper
 {
     public string $placeholderCover = '/images/record-placeholder.svg';
 
+    /** @var array<string, list<string>> */
+    protected array $mediaNames = [
+        'Vinyl' => ['Vinyl', 'Acetate', 'Flexi-disc', 'Lathe Cut', 'Shellac'],
+        'CD' => ['CD', 'CDr', 'CD-R', 'CD-RW', 'SACD', 'CDV'],
+        'Cassette' => ['Cassette', 'DCC', 'DAT', 'Microcassette', 'NT Cassette', 'DC-International', 'Elcaset'],
+    ];
+
     public function __construct(
         protected DiscogsTracklist $tracklist,
     ) {}
@@ -161,8 +168,10 @@ class DiscogsRecordMapper
             $name = $format['name'] ?? '';
             $quantity = (int) ($format['qty'] ?? 1);
             $formats[] = ($quantity > 1 ? $quantity.' × ' : '').$name;
-            if (in_array($name, ['Vinyl', 'CD', 'Cassette'], true)) {
-                $media[] = $name;
+            foreach ($this->mediaNames as $medium => $names) {
+                if (in_array($name, $names, true)) {
+                    $media[] = $medium;
+                }
             }
             $editions = array_merge($editions, $format['descriptions'] ?? [], empty($format['text']) ? [] : [$format['text']]);
         }
@@ -174,13 +183,19 @@ class DiscogsRecordMapper
     public function mediaFormats(string $description): array
     {
         $formats = [];
-        foreach (['Vinyl' => '/\b(?:vinyl|lp|\d+xlp)\b/i', 'CD' => '/\bcd\b/i', 'Cassette' => '/\bcassette\b/i'] as $format => $pattern) {
-            if (preg_match($pattern, $description)) {
-                $formats[] = $format;
+        foreach ($this->mediaNames as $format => $names) {
+            if ($format === 'Vinyl') {
+                $names[] = 'LP';
+            }
+            $alternatives = implode('|', array_map(fn (string $name): string => preg_quote($name, '/'), $names));
+            $pattern = '/\b(?:\d+\s*[x×]\s*)?(?:'.$alternatives.')\b/i';
+            if (preg_match($pattern, $description, $match, PREG_OFFSET_CAPTURE)) {
+                $formats[$format] = $match[0][1];
             }
         }
+        asort($formats);
 
-        return $formats;
+        return array_keys($formats);
     }
 
     /**
