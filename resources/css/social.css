@@ -294,16 +294,17 @@
     }
     .notification-count {
         position: absolute;
-        top: -3px;
-        right: -3px;
+        top: 0;
+        right: 0;
         background: var(--acid);
         color: var(--ink);
-        font-size: 14px;
+        font-size: 11px;
         place-items: center;
-        width: 26px;
-        height: 26px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 3px;
         line-height: 1;
-        border-radius: 50%;
+        border-radius: 999px;
     }
     .notification-count:not([hidden]) {
         display: grid;
