@@ -79,10 +79,6 @@
         color: var(--ink);
         opacity: 1;
     }
-    .record-search:focus-within {
-        outline: 2px solid;
-        outline-offset: 5px;
-    }
     .record-search input:focus-visible {
         outline: none;
     }
