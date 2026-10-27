@@ -68,6 +68,7 @@ class DiscogsRecordMapper
             'discogsMasterId' => ($release['master_id'] ?? 0) ?: null,
             'discogsLabelId' => ($release['labels'][0]['id'] ?? 0) ?: null,
             'labels' => $release['labels'] ?? [],
+            ...(isset($release['country']) ? ['country' => $release['country']] : []),
             'artistBios' => $artistBios,
             'releaseNotes' => $release['notes'] ?? '',
             'credits' => [

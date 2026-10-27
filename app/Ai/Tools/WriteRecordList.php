@@ -105,10 +105,8 @@ class WriteRecordList implements Approvable, Tool
             $attributes = array_filter(Arr::only($data, ['name', 'description', 'visibility']), fn ($value): bool => $value !== null);
             $list ??= app(CreateRecordListAction::class)->execute($this->user, $attributes);
             if (($data['recordMode'] ?? null) !== null) {
-                $existing = $list->records()->pluck('collection_records.id')->all();
-                $attributes['recordIds'] = $data['recordMode'] === 'add'
-                    ? array_values(array_unique([...$existing, ...$data['recordIds']]))
-                    : array_values(array_diff($existing, $data['recordIds']));
+                $attributes['recordIds'] = $data['recordIds'];
+                $attributes['recordMode'] = $data['recordMode'];
             }
             app(UpdateRecordListAction::class)->execute($this->user, $list, $attributes);
             $list->refresh();
@@ -116,9 +114,9 @@ class WriteRecordList implements Approvable, Tool
             return json_encode([
                 'action' => $data['action'] === 'create' ? 'created' : 'updated',
                 'publicId' => $list->public_id, 'description' => $list->description,
-                'covers' => $list->records()->without('release')->limit(4)->get(['collection_records.id', 'collection_records.public_id'])->map(fn ($copy): string => route('lists.cover', [$list, $copy], false))->all(),
+                'covers' => $list->entries()->whereNotNull('release_id')->limit(4)->get()->map(fn ($entry): string => route('lists.entries.cover', [$list, $entry], false))->all(),
                 'name' => $list->name, 'url' => route('lists.show', $list),
-                'visibility' => $list->visibility, 'count' => $list->records()->count(),
+                'visibility' => $list->visibility, 'count' => $list->entries()->whereNotNull('release_id')->count(),
             ], JSON_THROW_ON_ERROR);
         });
     }
@@ -127,7 +125,7 @@ class WriteRecordList implements Approvable, Tool
     {
         return hash('sha256', json_encode([
             $list->only(['name', 'description', 'visibility']),
-            $list->records()->pluck('collection_records.id')->all(),
+            $list->entries()->get(['public_id', 'release_id', 'collection_record_id', 'position', 'private_note'])->toArray(),
         ], JSON_THROW_ON_ERROR));
     }
 }

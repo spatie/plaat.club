@@ -25,7 +25,6 @@ export function ListPage({ list, records }: ListProps) {
                     ←{' '}
                     {list.canEdit ? 'Your lists' : `${list.owner.name}’s lists`}
                 </Link>
-                <p className="page-eyebrow">A selection by {list.owner.name}</p>
                 <h1>{list.name}</h1>
                 {list.description && (
                     <p className="lede list-description">{list.description}</p>
@@ -63,7 +62,7 @@ export function ListPage({ list, records }: ListProps) {
                             <h2>A little room for something good.</h2>
                             <p>
                                 {list.canEdit
-                                    ? 'Pick a few records from your collection to get started.'
+                                    ? 'Pick records from your collection or search Discogs. You don’t need to own them yet.'
                                     : 'No records in this selection yet.'}
                             </p>
                             {list.canEdit && (
@@ -79,10 +78,11 @@ export function ListPage({ list, records }: ListProps) {
                         <ol className="list-records">
                             {records.map((record, index) => (
                                 <ListRecordCard
-                                    key={record.copyId}
+                                    key={record.entryPublicId}
                                     listId={list.publicId}
                                     record={record}
                                     number={index + 1}
+                                    canEdit={list.canEdit}
                                 />
                             ))}
                         </ol>

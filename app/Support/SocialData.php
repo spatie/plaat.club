@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\CollectionRecord;
 use App\Models\Comment;
 use App\Models\RecordList;
+use App\Models\RecordListEntry;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Request;
@@ -40,6 +41,8 @@ class SocialData
             'position', 'title', 'artist', 'duration', 'appleMusicUrl', 'appleMusicSearch', 'spotifyUrl', 'spotifySearch',
         ]), $record->payload['tracks'] ?? []);
 
+        $viewer = $request->user();
+
         return [
             'collectionUrl' => $collectionUrl,
             'record' => [
@@ -53,9 +56,9 @@ class SocialData
                 'sharedNote' => $record->shared_note,
                 ...($owner ? ['privateNote' => $record->private_note] : []),
                 'canEditNotes' => $owner,
-                'lists' => $owner && $request->user()->hasVerifiedEmail()
-                    ? RecordList::query()->where('user_id', $record->user_id)->orderBy('name')
-                        ->withExists(['records as contains_record' => fn ($query) => $query->whereKey($record->id)])
+                'lists' => $viewer?->hasVerifiedEmail()
+                    ? RecordList::query()->where('user_id', $viewer->id)->orderBy('name')
+                        ->withExists(['entries as contains_record' => fn ($query) => $query->where('release_id', $record->discogs_release_id)])
                         ->get()->map(fn (RecordList $list) => ['id' => $list->id, 'publicId' => $list->public_id, 'name' => $list->name, 'visibility' => $list->visibility, 'containsRecord' => $list->getAttribute('contains_record')])->all()
                     : [],
                 'commentsEnabled' => $record->user->comments_enabled,
@@ -93,7 +96,7 @@ class SocialData
             'publicId' => $list->public_id,
             'owner' => self::person($list->user),
             'count' => $list->records_count,
-            'covers' => $list->records->map(fn (CollectionRecord $copy) => route('lists.cover', [$list, $copy], false))->all(),
+            'covers' => $list->entries->map(fn (RecordListEntry $entry) => route('lists.entries.cover', [$list, $entry], false))->all(),
         ];
     }
 

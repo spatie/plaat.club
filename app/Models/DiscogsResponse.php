@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\RecordCoverImages;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\MassPrunable;
@@ -30,8 +31,15 @@ class DiscogsResponse extends Model
      */
     public static function compactResponse(string $resourceType, array $response): array
     {
+        if ($resourceType === 'releases') {
+            $cover = $response['images'][0]['uri'] ?? null;
+            if (is_string($cover) && RecordCoverImages::isDiscogsCover($cover)) {
+                $response['cover_image'] = $cover;
+            }
+        }
+
         return Arr::only($response, match ($resourceType) {
-            'releases' => ['id', 'title', 'year', 'released', 'artists', 'labels', 'master_id', 'notes', 'extraartists', 'tracklist'],
+            'releases' => ['id', 'title', 'year', 'released', 'country', 'artists', 'labels', 'master_id', 'notes', 'extraartists', 'tracklist', 'formats', 'genres', 'styles', 'thumb', 'cover_image'],
             'masters' => ['id', 'year'],
             'artists' => ['id', 'name', 'profile'],
             'labels' => ['id', 'name'],

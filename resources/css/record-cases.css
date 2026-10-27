@@ -48,7 +48,10 @@
 }
 
 /* Keep every medium on the same ledge, with its own physical packaging. */
-.catalog-record:is([data-media-format='CD'], [data-media-format='Cassette'])
+:is(.catalog-record, .list-record-artwork):is(
+        [data-media-format='CD'],
+        [data-media-format='Cassette']
+    )
     .catalog-record-open {
     display: flex;
     align-items: flex-end;
@@ -56,7 +59,10 @@
     aspect-ratio: 1;
     width: 100%;
 }
-.catalog-record:is([data-media-format='CD'], [data-media-format='Cassette'])
+:is(.catalog-record, .list-record-artwork):is(
+        [data-media-format='CD'],
+        [data-media-format='Cassette']
+    )
     .catalog-record-art {
     border: 1px solid #f9f7e7a8;
     border-radius: 3px;
@@ -67,12 +73,14 @@
         2px 2px #3c3d39,
         4px 7px 9px #100a0899;
 }
-.catalog-record[data-media-format='CD'] .catalog-record-art {
+:is(.catalog-record, .list-record-artwork)[data-media-format='CD']
+    .catalog-record-art {
     width: 96%;
     aspect-ratio: 1.14;
     padding: 3px 3px 3px 9%;
 }
-.catalog-record[data-media-format='CD'] .catalog-record-art::before {
+:is(.catalog-record, .list-record-artwork)[data-media-format='CD']
+    .catalog-record-art::before {
     content: '';
     position: absolute;
     inset: 2px auto 2px 2px;
@@ -85,26 +93,33 @@
     );
     border-right: 1px solid #fcf8e87a;
 }
-.catalog-record[data-media-format='CD'] .catalog-record-art img {
+:is(.catalog-record, .list-record-artwork)[data-media-format='CD']
+    .catalog-record-art
+    img {
     object-fit: contain;
     background: #242822;
 }
-.catalog-record[data-media-format='CD'] .catalog-record-image {
+:is(.catalog-record, .list-record-artwork)[data-media-format='CD']
+    .catalog-record-image {
     background-size: contain;
     background-color: #242822;
 }
-.catalog-record[data-media-format='Cassette'] .catalog-record-art {
+:is(.catalog-record, .list-record-artwork)[data-media-format='Cassette']
+    .catalog-record-art {
     display: flex;
     flex-direction: column;
     width: 62%;
     aspect-ratio: 0.62;
     padding: 4px 5px 5px;
 }
-.catalog-record[data-media-format='Cassette'] .catalog-record-art img {
+:is(.catalog-record, .list-record-artwork)[data-media-format='Cassette']
+    .catalog-record-art
+    img {
     height: auto;
     aspect-ratio: 1;
 }
-.catalog-record[data-media-format='Cassette'] .catalog-record-image {
+:is(.catalog-record, .list-record-artwork)[data-media-format='Cassette']
+    .catalog-record-image {
     height: auto;
     aspect-ratio: 1;
 }

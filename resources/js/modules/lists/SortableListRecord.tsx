@@ -2,6 +2,8 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 
+import { ListRecordArtwork } from '@/modules/lists/ListRecordArtwork';
+import { RecordOwnership } from '@/modules/lists/RecordOwnership';
 import type { PickerRecord } from '@/modules/lists/types';
 
 export function SortableListRecord({
@@ -21,7 +23,7 @@ export function SortableListRecord({
         setNodeRef,
         transform,
         transition,
-    } = useSortable({ id: record.copyId });
+    } = useSortable({ id: record.entryPublicId ?? record.releaseId });
 
     return (
         <li
@@ -40,13 +42,17 @@ export function SortableListRecord({
                 <GripVertical size={20} aria-hidden="true" />
             </button>
             <span className="selection-number">{index + 1}</span>
-            <img src={record.cover} alt="" width={44} height={44} />
+            <ListRecordArtwork record={record} />
             <div className="picker-record-text">
                 <strong>{record.displayTitle}</strong>
                 <small>{record.artist}</small>
                 <small>
-                    {record.originalYear ?? record.year} · {record.format}
+                    {[record.year, record.format, record.country]
+                        .filter(Boolean)
+                        .join(' · ')}
                 </small>
+                {record.catalogNumber && <small>{record.catalogNumber}</small>}
+                <RecordOwnership {...record} />
             </div>
             <button
                 className="selection-remove"

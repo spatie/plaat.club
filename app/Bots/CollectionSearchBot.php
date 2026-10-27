@@ -13,6 +13,7 @@ use App\Ai\Tools\WriteRecordList;
 use App\Models\Activity;
 use App\Models\CollectionRecord;
 use App\Models\RecordList;
+use App\Models\Release;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
@@ -228,9 +229,10 @@ class CollectionSearchBot implements HandlesMessages
                 ->join('releases', 'releases.id', '=', 'collection_records.discogs_release_id')
                 ->whereIn('collection_records.id', array_column($data['items'], 'recordId'))
                 ->pluck('releases.cover_preview', 'collection_records.id');
+            $releasePreviews = Release::query()->whereIn('id', array_column($data['items'], 'releaseId'))->pluck('cover_preview', 'id');
 
             $data['items'] = array_map(fn (array $record): array => [
-                ...$record, 'coverPreview' => $previews[$record['recordId']] ?? null,
+                ...$record, 'coverPreview' => $previews[$record['recordId'] ?? 0] ?? $releasePreviews[$record['releaseId'] ?? 0] ?? null,
             ], $data['items']);
         }
 

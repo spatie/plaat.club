@@ -179,6 +179,30 @@ provided by Google. Anonymous visitors can still browse public collections.
   recorded per recipient to prevent ordinary reruns from sending duplicates. As with
   SMTP generally, a crash after delivery but before marking completion can duplicate a send.
 
+### Release lists
+
+Verified collectors manage ordinary lists at `/lists`. Each defaults to **Only me**,
+with independent **Friends** / **Everyone** visibility. Save releases from accessible
+collection records, choose from your collection, search Discogs, or paste a Discogs
+release URL in the editor's Discogs search. Searches are cached for five minutes,
+require at least three characters, and never import releases. Saving a new selection
+imports trusted release metadata through the shared Discogs client and rate limiter,
+without creating ownership, notifications or feed activity.
+
+List entries have their own UUID and reference a shared release. Existing physical-copy
+entries retain their copy identity, duplicate pressings and order; removing a collection
+copy later does not remove its release from a list. Releases saved from another person's
+collection never retain that person's copy or notes. Detail and cover access is authorized
+against the list before serving cached artwork. Private entry notes and current ownership
+indicators are owner-only. Exact ownership or ownership of another pressing never blocks
+saving. Status only reflects imported copies and known Discogs master IDs, not unsynced
+purchases or unmatched editions.
+
+The release-list migration works offline. It preserves old copy entries and tombstones;
+previously removed copies without recoverable release IDs remain owner-visible tombstones
+until the list is saved. There are no wishlist-specific tables or routes: **Wishlist**
+is simply a list name. Discogs wantlist synchronization is not included.
+
 ### Discogs OAuth
 
 Register a Discogs application with callback `https://your-app-host/discogs/callback`.

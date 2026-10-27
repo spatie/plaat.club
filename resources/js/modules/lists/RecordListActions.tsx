@@ -95,7 +95,7 @@ export function RecordListActions({
             );
     }
 
-    if (!record.canEditNotes || !auth.user?.verified) return null;
+    if (!auth.user?.verified) return null;
 
     return (
         <details

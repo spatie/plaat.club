@@ -1,5 +1,12 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ChevronDown, LogOut, Settings, Shield, Users } from 'lucide-react';
+import {
+    ListMusic,
+    ChevronDown,
+    LogOut,
+    Settings,
+    Shield,
+    Users,
+} from 'lucide-react';
 import { useRef } from 'react';
 
 import { Avatar } from '@/modules/social/Avatar';
@@ -27,6 +34,18 @@ export function AccountMenu({ path, user }: { path: string; user: Viewer }) {
                 className="account-popover"
                 popover="auto"
             >
+                {user.verified && (
+                    <Link
+                        href="/lists"
+                        aria-current={
+                            path.startsWith('/lists') ? 'page' : undefined
+                        }
+                        onClick={() => popover.current?.hidePopover()}
+                    >
+                        <ListMusic size={16} aria-hidden="true" />
+                        Your lists
+                    </Link>
+                )}
                 {user.verified && (
                     <Link
                         href="/friends/manage"

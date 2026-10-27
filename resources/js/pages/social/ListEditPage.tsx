@@ -16,18 +16,28 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Check, Plus, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { ListRecordArtwork } from '@/modules/lists/ListRecordArtwork';
+import { RecordOwnership } from '@/modules/lists/RecordOwnership';
 import { SortableListRecord } from '@/modules/lists/SortableListRecord';
 import type { ListEditProps, PickerRecord } from '@/modules/lists/types';
 import { VisibilityPicker } from '@/modules/social/VisibilityPicker';
 import '../../../css/record-lists.css';
 
-export function ListEditPage({ list, records, results, query }: ListEditProps) {
+export function ListEditPage({
+    list,
+    records,
+    results,
+    query,
+    source: initialSource,
+    searchError,
+}: ListEditProps) {
     const form = useForm(`RecordList:${list.publicId}`, {
         name: list.name,
         description: list.description ?? '',
         visibility: list.visibility,
         selection: records as PickerRecord[],
     });
+    const [source, setSource] = useState(initialSource);
     const [search, setSearch] = useState(query);
     const [review, setReview] = useState(false);
     const [searching, setSearching] = useState(false);
@@ -78,7 +88,7 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
             url,
             {},
             {
-                only: ['results', 'query'],
+                only: ['results', 'query', 'source', 'searchError'],
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
@@ -103,8 +113,11 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
         setSearching(true);
         if (searchTimer.current) clearTimeout(searchTimer.current);
         searchTimer.current = setTimeout(
-            () => visit(`${base}/edit?q=${encodeURIComponent(value)}`),
-            250,
+            () =>
+                visit(
+                    `${base}/edit?source=${source}&q=${encodeURIComponent(value)}`,
+                ),
+            source === 'discogs' ? 500 : 250,
         );
     }
 
@@ -116,8 +129,8 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                 <p className="page-eyebrow">Edit your list</p>
                 <h1>{list.name}</h1>
                 <p>
-                    Find records in your collection, then drag your picks into
-                    order. Save your list when it feels right.
+                    Pick records from your collection or Discogs, then drag them
+                    into order. Adding to a list never adds to your collection.
                 </p>
             </div>
             {list.removedCount > 0 && (
@@ -135,7 +148,12 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                     cancelSearch.current?.();
                     form.transform(({ selection, ...data }) => ({
                         ...data,
-                        recordIds: selection.map((record) => record.copyId),
+                        entries: selection.map(
+                            ({ entryPublicId, releaseId }) => ({
+                                entryPublicId,
+                                releaseId,
+                            }),
+                        ),
                     }));
                     form.patch(base);
                 }}
@@ -216,22 +234,56 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                             <span>1</span> Add records
                         </h2>
                         <p className="muted">
-                            Search your collection. Your picks stay while you
-                            browse.
+                            Your picks stay while you switch sources and browse.
                         </p>
+                        <div
+                            className="picker-source-tabs"
+                            aria-label="Search source"
+                        >
+                            {(['collection', 'discogs'] as const).map(
+                                (value) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        aria-pressed={source === value}
+                                        disabled={form.processing}
+                                        onClick={() => {
+                                            setSource(value);
+                                            if (searchTimer.current)
+                                                clearTimeout(
+                                                    searchTimer.current,
+                                                );
+                                            visit(
+                                                `${base}/edit?source=${value}&q=${encodeURIComponent(search)}`,
+                                            );
+                                        }}
+                                    >
+                                        {value === 'collection'
+                                            ? 'Your collection'
+                                            : 'Discogs'}
+                                    </button>
+                                ),
+                            )}
+                        </div>
                         <label
                             className="picker-search"
                             htmlFor="record-search"
                         >
                             <Search size={21} aria-hidden="true" />
                             <span className="sr-only">
-                                Search your collection
+                                {source === 'discogs'
+                                    ? 'Search Discogs'
+                                    : 'Search your collection'}
                             </span>
                             <input
                                 id="record-search"
                                 type="search"
-                                placeholder="Search artist, album, year…"
-                                maxLength={200}
+                                placeholder={
+                                    source === 'discogs'
+                                        ? 'Artist, album or Discogs release URL…'
+                                        : 'Search artist, album, year…'
+                                }
+                                maxLength={500}
                                 disabled={form.processing}
                                 value={search}
                                 onChange={(event) =>
@@ -248,35 +300,71 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                                 ? 'Searching…'
                                 : search
                                   ? `Results for “${query}”`
-                                  : 'Recently added to your collection'}
+                                  : source === 'discogs'
+                                    ? 'Search the Discogs catalogue. Choose a specific pressing.'
+                                    : 'Recently added to your collection'}
                         </p>
+                        {searchError && (
+                            <p className="field-error" role="alert">
+                                {searchError}
+                            </p>
+                        )}
                         <div aria-busy={searching} className="picker-rows">
                             {results.data.map((record) => {
                                 const added = selected.some(
-                                    (entry) => entry.copyId === record.copyId,
+                                    (entry) =>
+                                        entry.releaseId === record.releaseId,
                                 );
                                 return (
                                     <div
                                         className="picker-row"
-                                        key={record.copyId}
+                                        key={
+                                            record.copyPublicId ??
+                                            record.releaseId
+                                        }
                                     >
-                                        <img
-                                            src={record.cover}
-                                            alt=""
-                                            width={56}
-                                            height={56}
-                                            loading="lazy"
-                                        />
+                                        <ListRecordArtwork record={record} />
                                         <div className="picker-record-text">
                                             <strong>
                                                 {record.displayTitle}
                                             </strong>
                                             <span>{record.artist}</span>
                                             <small>
-                                                {record.originalYear ??
-                                                    record.year}{' '}
-                                                · {record.format}
+                                                {[
+                                                    record.year,
+                                                    record.format,
+                                                    record.country,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' · ')}
                                             </small>
+                                            {(record.label ||
+                                                record.catalogNumber) && (
+                                                <small>
+                                                    {[
+                                                        record.label,
+                                                        record.catalogNumber,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(' · ')}
+                                                </small>
+                                            )}
+                                            {source === 'discogs' &&
+                                                record.discogsUrl && (
+                                                    <small>
+                                                        <a
+                                                            href={
+                                                                record.discogsUrl
+                                                            }
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            View this edition on
+                                                            Discogs ↗
+                                                        </a>
+                                                    </small>
+                                                )}
+                                            <RecordOwnership {...record} />
                                         </div>
                                         <button
                                             className={`picker-add ${added ? 'is-added' : ''}`}
@@ -284,6 +372,7 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                                             disabled={
                                                 added ||
                                                 searching ||
+                                                form.processing ||
                                                 selected.length >= 1000
                                             }
                                             aria-label={`${added ? 'Added' : 'Add'} ${record.displayTitle} by ${record.artist}`}
@@ -304,25 +393,42 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                                     </div>
                                 );
                             })}
-                            {results.data.length === 0 && (
-                                <div className="list-empty">
-                                    <h3>
-                                        {search
-                                            ? 'Nothing found this time.'
-                                            : 'Your collection is empty.'}
-                                    </h3>
-                                    <p>
-                                        {search
-                                            ? 'Try an artist, a shorter title or a different spelling.'
-                                            : 'Import your records from Discogs in Settings, then come back to make your selection.'}
-                                    </p>
-                                    {!search && (
-                                        <Link href="/settings">
-                                            Go to Settings
-                                        </Link>
-                                    )}
-                                </div>
-                            )}
+                            {results.data.length === 0 &&
+                                !searchError &&
+                                !searching && (
+                                    <div className="list-empty">
+                                        <h3>
+                                            {source === 'discogs' &&
+                                            search.trim().length < 3
+                                                ? 'Find your next record.'
+                                                : search
+                                                  ? 'Nothing found this time.'
+                                                  : 'Your collection is empty.'}
+                                        </h3>
+                                        <p>
+                                            {source === 'discogs' &&
+                                            search.trim().length < 3
+                                                ? 'Type at least three characters, or paste a Discogs release URL. You don’t need to own a record to save it here.'
+                                                : search
+                                                  ? 'Try an artist, a shorter title or a different spelling.'
+                                                  : 'Import your records from Discogs in Settings, then come back to make your selection.'}
+                                        </p>
+                                        {!search && source === 'collection' && (
+                                            <button
+                                                type="button"
+                                                className="text-button"
+                                                onClick={() => {
+                                                    setSource('discogs');
+                                                    visit(
+                                                        `${base}/edit?source=discogs`,
+                                                    );
+                                                }}
+                                            >
+                                                Search Discogs instead
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                         </div>
                         <div className="actions picker-pagination">
                             {results.prev_page_url && (
@@ -371,7 +477,7 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                         {selected.length === 0 && (
                             <p className="list-empty">
                                 A good list starts with one record. Find one in
-                                your collection and add it here.
+                                your collection or on Discogs and add it here.
                             </p>
                         )}
                         <DndContext
@@ -385,24 +491,35 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                                         selected,
                                         selected.findIndex(
                                             (record) =>
-                                                record.copyId === active.id,
+                                                (record.entryPublicId ??
+                                                    record.releaseId) ===
+                                                active.id,
                                         ),
                                         selected.findIndex(
                                             (record) =>
-                                                record.copyId === over.id,
+                                                (record.entryPublicId ??
+                                                    record.releaseId) ===
+                                                over.id,
                                         ),
                                     ),
                                 );
                             }}
                         >
                             <SortableContext
-                                items={selected.map((record) => record.copyId)}
+                                items={selected.map(
+                                    (record) =>
+                                        record.entryPublicId ??
+                                        record.releaseId,
+                                )}
                                 strategy={verticalListSortingStrategy}
                             >
                                 <ol>
                                     {selected.map((record, index) => (
                                         <SortableListRecord
-                                            key={record.copyId}
+                                            key={
+                                                record.entryPublicId ??
+                                                record.releaseId
+                                            }
                                             index={index}
                                             record={record}
                                             onRemove={() =>
@@ -410,8 +527,10 @@ export function ListEditPage({ list, records, results, query }: ListEditProps) {
                                                     'selection',
                                                     selected.filter(
                                                         (entry) =>
-                                                            entry.copyId !==
-                                                            record.copyId,
+                                                            (entry.entryPublicId ??
+                                                                entry.releaseId) !==
+                                                            (record.entryPublicId ??
+                                                                record.releaseId),
                                                     ),
                                                 )
                                             }

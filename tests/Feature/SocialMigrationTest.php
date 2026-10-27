@@ -68,6 +68,8 @@ it('migrates the existing collection losslessly and silently to Freek’s reserv
         $migration->up();
         $migration = require database_path('migrations/2026_10_23_190000_add_public_ids_to_record_lists.php');
         $migration->up();
+        $migration = require database_path('migrations/2026_10_27_100000_make_list_entries_release_based.php');
+        $migration->up();
         $freek = User::freek();
         expect($freek->email)->toBe('freek@spatie.be')->and($freek->visibility)->toBe('everyone')->and($freek->collection_imported_at)->not->toBeNull();
         expect(CollectionRecord::legacy()->count())->toBe(3)->and(CollectionRecord::query()->where('is_activity', true)->count())->toBe(0);

@@ -7,8 +7,9 @@ use App\Actions\Lists\DeleteRecordListAction;
 use App\Actions\Lists\UpdateRecordListAction;
 use App\Models\CollectionRecord;
 use App\Models\RecordList;
+use App\Support\ListRecords;
+use App\Support\ListReleaseSearch;
 use App\Support\ProfileCollection;
-use App\Support\RecordCollection;
 use App\Support\SocialData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class RecordListsController extends Controller
         $list = $createList->execute($request->user(), $request->all());
 
         if ($request->has('copyId')) {
-            $copy = $list->records()->firstOrFail();
+            $copy = CollectionRecord::query()->findOrFail($request->integer('copyId'));
 
             return $request->header('X-Inertia-Partial-Component') === 'social/RecordPage'
                 ? to_route('shelf.record', $copy)
@@ -56,6 +57,12 @@ class RecordListsController extends Controller
     public function edit(Request $request, RecordList $recordList): Response
     {
         abort_unless($recordList->user_id === $request->user()->id, 404);
+        if ($request->query('source') === 'discogs') {
+            return Inertia::render('social/ListEditPage', [
+                ...$this->data($request, $recordList),
+                ...app(ListReleaseSearch::class)->search($request, $request->user()),
+            ]);
+        }
         $collection = new ProfileCollection($request->user(), $request);
         $page = $collection->records();
         $copies = $request->user()->records()->whereIn('public_id', array_column($page->items(), 'publicId'))
@@ -63,11 +70,16 @@ class RecordListsController extends Controller
 
         return Inertia::render('social/ListEditPage', [
             ...$this->data($request, $recordList),
+            'source' => 'collection',
+            'searchError' => null,
             'query' => $collection->state()['query'],
             'results' => SocialData::pagination($page, array_map(fn (array $record) => [
                 'copyId' => $copies[$record['publicId']],
                 'copyPublicId' => $record['publicId'],
-                ...Arr::only($record, ['artist', 'displayTitle', 'year', 'originalYear', 'format', 'cover']),
+                'releaseId' => $record['id'],
+                'owned' => true,
+                'otherPressingOwned' => false,
+                ...Arr::only($record, ['artist', 'displayTitle', 'year', 'originalYear', 'format', 'mediaFormats', 'cover', 'country', 'label', 'catalogNumber']),
             ], $page->items())),
         ]);
     }
@@ -76,7 +88,7 @@ class RecordListsController extends Controller
     {
         $updateList->execute($request->user(), $recordList, $request->all());
 
-        if ($request->has('recordIds')) {
+        if ($request->has('recordIds') || $request->has('entries')) {
             return to_route('lists.index')->with('status', 'List saved.');
         }
 
@@ -101,21 +113,11 @@ class RecordListsController extends Controller
                 'owner' => SocialData::person($list->user),
                 'canEdit' => $request->user()?->id === $list->user_id && $request->user()->hasVerifiedEmail(),
                 'removedCount' => $request->user()?->id === $list->user_id
-                    ? DB::table('record_list_entries')->where('record_list_id', $list->id)->whereNull('collection_record_id')->count() : 0,
+                    ? DB::table('record_list_entries')->where('record_list_id', $list->id)->whereNull('release_id')->count() : 0,
             ],
-            'records' => function () use ($list): array {
-                $copies = array_values($list->records()->with('user')->get()->all());
-                $records = app(RecordCollection::class)->profileSummaries($copies);
-
-                return array_map(fn (array $record, CollectionRecord $copy) => [
-                    ...Arr::except($record, ['shareUrl']),
-                    'copyId' => $copy->id,
-                    'copyPublicId' => $copy->public_id,
-                    'cover' => filled($copy->payload['cover'] ?? null) && $copy->payload['cover'] !== '/images/record-placeholder.svg'
-                        ? route('lists.cover', [$list, $copy], false) : '/images/record-placeholder.svg',
-                    'shareUrl' => route('lists.show', $list, false).'#record-'.$copy->id,
-                ], $records, $copies);
-            },
+            'records' => fn () => app(ListRecords::class)->summaries($list,
+                array_values($list->entries()->whereNotNull('release_id')->with(['release', 'copy' => fn ($query) => $query->without('release')->select(['id', 'public_id'])])->get()->all()),
+                $request->user()),
         ];
     }
 }

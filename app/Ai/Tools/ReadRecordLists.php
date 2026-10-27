@@ -42,7 +42,8 @@ class ReadRecordLists implements Tool
     protected function read(Request $request): string
     {
         $data = $request->validate(['list' => ['nullable', 'string', 'max:120']]);
-        $query = RecordList::query()->where('user_id', $this->user->id)->withCount('records')->orderBy('name')->orderBy('id');
+        $query = RecordList::query()->where('user_id', $this->user->id)
+            ->withCount(['entries as records_count' => fn ($query) => $query->whereNotNull('release_id')])->orderBy('name')->orderBy('id');
         if (filled($data['list'] ?? null)) {
             $query->where(fn ($query) => $query->where('name', $data['list'])
                 ->when(Str::isUuid($data['list']), fn ($query) => $query->orWhere('public_id', $data['list'])));
@@ -60,13 +61,15 @@ class ReadRecordLists implements Tool
                 'visibility' => $list->visibility,
                 'count' => $list->records_count,
                 'url' => route('lists.show', $list),
-                'covers' => $list->records()->without('release')->limit(4)->get(['collection_records.id', 'collection_records.public_id'])->map(fn ($copy): string => route('lists.cover', [$list, $copy], false))->all(),
-                'records' => filled($data['list'] ?? null) ? $list->records()->limit(24)->get()->map(fn ($copy): array => [
-                    'artist' => $copy->payload['artist'], 'title' => $copy->payload['title'],
-                    'recordId' => $copy->id,
-                    'year' => $copy->payload['originalYear'], 'url' => $copy->url(false),
-                    'mediaFormats' => $copy->formats(),
-                    'cover' => route('lists.cover', [$list, $copy], false), 'evidence' => [],
+                'covers' => $list->entries()->whereNotNull('release_id')->limit(4)->get()->map(fn ($entry): string => route('lists.entries.cover', [$list, $entry], false))->all(),
+                'records' => filled($data['list'] ?? null) ? $list->entries()->whereNotNull('release_id')->with(['release', 'copy.user'])->limit(24)->get()->map(fn ($entry): array => [
+                    'artist' => $entry->release->artist, 'title' => $entry->release->title,
+                    'entryPublicId' => $entry->public_id, 'releaseId' => $entry->release_id,
+                    ...($entry->copy === null ? [] : ['recordId' => $entry->copy->id]),
+                    'year' => $entry->release->original_year,
+                    'url' => $entry->copy?->url(false) ?? route('lists.show', $list, false).'#record-'.$entry->public_id,
+                    'mediaFormats' => $entry->release->recordData()['mediaFormats'] ?? [],
+                    'cover' => $entry->copy === null ? route('lists.entries.cover', [$list, $entry], false) : route('lists.cover', [$list, $entry->copy], false), 'evidence' => [],
                 ])->all() : [],
             ];
         });

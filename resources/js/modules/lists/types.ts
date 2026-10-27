@@ -17,11 +17,20 @@ export type RecordList = Omit<ListSummary, 'count'> & {
     removedCount: number;
 };
 export type ListRecord = CollectionRecordSummary & {
-    copyId: number;
-    copyPublicId: string;
+    entryPublicId: string;
+    releaseId: number;
+    catalogNumber?: string;
+    discogsUrl?: string;
+    copyId?: number;
+    copyPublicId?: string;
+    owned?: boolean;
+    otherPressingOwned?: boolean;
+    privateNote?: string | null;
+    country?: string;
 };
 export type PickerRecord = Pick<
     ListRecord,
+    | 'releaseId'
     | 'copyId'
     | 'copyPublicId'
     | 'artist'
@@ -29,10 +38,19 @@ export type PickerRecord = Pick<
     | 'year'
     | 'originalYear'
     | 'format'
+    | 'mediaFormats'
+    | 'catalogNumber'
+    | 'discogsUrl'
     | 'cover'
->;
+    | 'owned'
+    | 'otherPressingOwned'
+    | 'country'
+    | 'label'
+> & { entryPublicId?: string };
 export type ListProps = { list: RecordList; records: ListRecord[] };
 export type ListEditProps = ListProps & {
     query: string;
+    source: 'collection' | 'discogs';
+    searchError: string | null;
     results: Pagination<PickerRecord>;
 };

@@ -1071,3 +1071,17 @@ it('persists answer feedback only for its author and supports undo without model
     $this->actingAs(socialUser('feedback_other'))->patchJson($url, ['wrong' => true])->assertNotFound();
     CollectionQuestion::assertPromptedTimes(1);
 });
+
+it('renders release only list entries in trusted AI cards without treating entry IDs as collection copies', function () {
+    $viewer = socialUser('list_viewer');
+    $source = socialRecord(socialUser('private_source'), 'Release only album');
+    $list = RecordList::query()->create(['user_id' => $viewer->id, 'name' => 'Unified list']);
+    $entry = $list->entries()->create(['release_id' => $source->discogs_release_id, 'position' => 0, 'private_note' => 'Do not reveal']);
+    CollectionQuestion::fake([new ToolCall('read', 'ReadRecordLists', ['list' => $list->public_id]), 'Your saved release.'])->preventStrayPrompts();
+    $this->actingAs($viewer);
+    $answer = askCollection('Show Unified list');
+    $items = collectionAnswerCard($answer, 'releases')['items'];
+    expect(collectionAnswerCard($answer, 'lists')['items'][0]['count'])->toBe(1)
+        ->and($items[0])->toMatchArray(['releaseId' => $source->discogs_release_id, 'entryPublicId' => $entry->public_id, 'title' => 'Release only album'])
+        ->and($items[0])->not->toHaveKey('recordId')->and($answer)->not->toContain('Do not reveal');
+});

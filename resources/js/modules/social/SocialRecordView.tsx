@@ -39,7 +39,9 @@ export function SocialRecordView({
                     shareUrl: record.url,
                 }}
                 details={payload}
-                actions={<RecordListActions record={record} />}
+                actions={
+                    <RecordListActions key={record.publicId} record={record} />
+                }
                 onReady={onReady}
                 onBack={onBack}
                 onArtist={(artist) =>

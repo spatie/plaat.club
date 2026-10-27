@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -29,11 +30,18 @@ class RecordList extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** @return BelongsToMany<CollectionRecord, $this> */
+    /** @return BelongsToMany<CollectionRecord, $this, RecordListEntry> */
     public function records(): BelongsToMany
     {
         return $this->belongsToMany(CollectionRecord::class, 'record_list_entries')
+            ->using(RecordListEntry::class)
             ->withPivot('position')->orderByPivot('position');
+    }
+
+    /** @return HasMany<RecordListEntry, $this> */
+    public function entries(): HasMany
+    {
+        return $this->hasMany(RecordListEntry::class)->orderBy('position')->orderBy('id');
     }
 
     public function canView(?User $viewer): bool
@@ -58,7 +66,7 @@ class RecordList extends Model
     public static function previews(?User $viewer): Builder
     {
         return self::visibleTo($viewer)
-            ->with(['user', 'records' => fn ($query) => $query->without('release')->select(['collection_records.id', 'collection_records.public_id'])->limit(4)])
-            ->withCount('records')->latest('updated_at')->orderByDesc('id');
+            ->with(['user', 'entries' => fn ($query) => $query->whereNotNull('release_id')->limit(4)])
+            ->withCount(['entries as records_count' => fn ($query) => $query->whereNotNull('release_id')])->latest('updated_at')->orderByDesc('id');
     }
 }

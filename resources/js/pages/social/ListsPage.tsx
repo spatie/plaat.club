@@ -81,7 +81,7 @@ export function ListsPage({ lists }: { lists: ListPreview[] }) {
                     </div>
                     <p id="new-list-description">
                         Name your selection, then pick records from your
-                        collection.
+                        collection or search Discogs.
                     </p>
                     <form
                         className="stack"

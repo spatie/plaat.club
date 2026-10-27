@@ -82,6 +82,13 @@ class ProfileCollection
         ]);
     }
 
+    /** @return list<int> */
+    public function matchingReleaseIds(): array
+    {
+        return array_values($this->query()->distinct()->orderBy('records.discogs_release_id')->pluck('records.discogs_release_id')
+            ->map(fn ($releaseId): int => (int) $releaseId)->all());
+    }
+
     protected function query(bool $withDates = false): Builder
     {
         $state = $this->state();

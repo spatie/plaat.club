@@ -414,6 +414,56 @@
             14px 'Club Sans',
             sans-serif;
     }
+    .picker-source-tabs {
+        display: flex;
+        gap: 24px;
+        border-bottom: 1px solid #1e1e1540;
+        margin-bottom: 20px;
+    }
+    .picker-source-tabs button {
+        min-height: 44px;
+        padding: 8px 0;
+        border-bottom: 3px solid transparent;
+    }
+    .picker-source-tabs button[aria-pressed='true'] {
+        border-color: var(--ink);
+        font-weight: 600;
+    }
+    .record-ownership {
+        display: inline-flex;
+        justify-self: start;
+        width: fit-content;
+        padding: 3px 8px;
+        margin-top: 4px;
+        border: 1px solid #1e1e1530;
+        border-radius: 4px;
+        background: #fffdf180;
+        font-size: 12px;
+        font-weight: 400;
+    }
+    .record-ownership.is-owned {
+        background: var(--acid);
+    }
+    .list-entry-note {
+        margin: -8px 24px 24px 164px;
+        font-size: 13px;
+    }
+    .list-entry-note .text-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+    }
+    .list-private-note {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 0 0 8px;
+    }
+    .list-private-note small {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
     .picker-search {
         display: flex;
         align-items: center;
@@ -445,10 +495,10 @@
         padding: 16px 0;
         border-bottom: 1px solid #1e1e1530;
     }
-    .picker-row img,
-    .list-record-toggle img {
-        object-fit: cover;
-        aspect-ratio: 1;
+    .list-record-artwork,
+    .list-record-artwork > .catalog-record-open {
+        display: block;
+        width: 100%;
     }
     .picker-record-text {
         display: grid;
@@ -525,9 +575,6 @@
         box-shadow: 0 4px 12px #1e1e1530;
         background: var(--cream);
         outline: 1px solid var(--ink);
-    }
-    .picker-selection li img {
-        object-fit: cover;
     }
     .selection-number {
         font-size: 12px;
@@ -742,10 +789,6 @@
             gap: 10px;
             grid-template-columns: 48px minmax(0, 1fr) auto;
         }
-        .picker-row img {
-            width: 48px;
-            height: 48px;
-        }
         .picker-add {
             min-width: 70px;
             font-size: 14px;
@@ -773,6 +816,13 @@
         }
         .list-record-toggle strong {
             font-size: 24px;
+        }
+        .list-entry-note {
+            margin-left: 106px;
+            margin-right: 0;
+        }
+        .list-entry-note:has(form) {
+            margin-left: 0;
         }
         .list-record-details {
             padding-inline: 0;

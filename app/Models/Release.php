@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array<string, mixed> $data
  * @property ?string $artist
  * @property ?string $title
+ * @property ?string $format
  * @property ?string $cover
  * @property ?string $cover_preview
  * @property ?CarbonImmutable $info_imported_at
@@ -32,7 +33,7 @@ class Release extends Model
         'trackSource' => 'track_source', 'releaseNotes' => 'release_notes',
     ];
 
-    public const JSON_FIELDS = ['artists', 'labels', 'mediaFormats', 'genres', 'styles', 'tracks', 'credits', 'discogsTextLinks'];
+    public const JSON_FIELDS = ['artists', 'labels', 'mediaFormats', 'genres', 'styles', 'tracks', 'credits', 'discogsTextLinks', 'country'];
 
     public $incrementing = false;
 

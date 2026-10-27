@@ -102,6 +102,7 @@ it('backfills legacy descriptions without changing dates or activity and recogni
         $table->dropForeign(['discogs_release_id']);
         $table->json('payload');
     });
+    Schema::table('record_list_entries', fn (Blueprint $table) => $table->dropForeign(['release_id']));
     Schema::dropIfExists('release_embeddings');
     foreach (['artist_release', 'artists', 'releases'] as $table) {
         Schema::drop($table);
