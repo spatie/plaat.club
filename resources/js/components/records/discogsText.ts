@@ -23,7 +23,10 @@ export function discogsEntityUrl(type: 'a' | 'r' | 'l', value: string) {
         : `https://www.discogs.com/search/?type=${entity}&q=${encodeURIComponent(value)}`;
 }
 
-export function discogsText(text: string): ReactNode[] {
+export function discogsText(
+    text: string,
+    links: Record<string, string> = {},
+): ReactNode[] {
     const root: ReactNode[] = [];
     const stack: { tag: string; opening: string; children: ReactNode[] }[] = [];
     const children = () => stack.at(-1)?.children ?? root;
@@ -60,10 +63,13 @@ export function discogsText(text: string): ReactNode[] {
 
         const type = tag[0] as 'a' | 'r' | 'l';
         const value = token.slice(token[1] === '=' ? 2 : 1);
+        const numeric = /^\d+$/.test(value);
         const label =
-            token[1] === '='
-                ? value
-                : `${{ a: 'Artist', r: 'Release', l: 'Label' }[type]} ${value}`;
+            numeric && links[`${type}${Number(value)}`]
+                ? links[`${type}${Number(value)}`]
+                : token[1] === '='
+                  ? value
+                  : `${{ a: 'Artist', r: 'Release', l: 'Label' }[type]} ${value}`;
         children().push(
             createElement(
                 'a',

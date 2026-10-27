@@ -55,6 +55,7 @@ export type CollectionRecord = {
     bandcampSearch?: boolean;
     artistBios?: ArtistBio[];
     releaseNotes?: string | null;
+    discogsTextLinks?: Record<string, string>;
     credits?: {
         release: DiscogsCredit[];
         tracks: { position: string; title: string; artists: DiscogsCredit[] }[];

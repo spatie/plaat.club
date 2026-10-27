@@ -19,7 +19,8 @@ class ImportDiscogsInfoCommand extends Command
     public function handle(ImportReleaseInfoAction $importReleaseInfo): int
     {
         $releaseIds = Release::query()->whereHas('records')
-            ->whereNull('info_imported_at')->orderBy('id')->pluck('id');
+            ->where(fn ($query) => $query->whereNull('info_imported_at')->orWhereNull('data->discogsTextLinks'))
+            ->orderBy('id')->pluck('id');
         $legacyIds = array_fill_keys(Release::query()->whereHas('records.user', fn ($query) => $query->where('legacy_owner', true))->pluck('id')->all(), true);
         $imported = 0;
         $legacyChanged = false;

@@ -8,6 +8,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     Http::preventStrayRequests();
@@ -265,7 +266,7 @@ it('backfills release information for every copy and resumes without replacing p
         ->and($first->fresh()->release->discogs_master_id)->toBe(5899)
         ->and($first->fresh()->release->discogs_label_id)->toBe(151)
         ->and($first->fresh()->payload['labels'])->toBe([['id' => 151, 'name' => 'Polydor', 'catno' => 'AMBIENT-1']])
-        ->and($second->fresh()->payload)->toEqual([...$originalPayload, ...array_intersect_key($first->fresh()->payload, array_flip(['artistBios', 'releaseNotes', 'credits', 'labels', 'discogsMasterId', 'discogsLabelId']))])
+        ->and($second->fresh()->payload)->toEqual([...$originalPayload, ...array_intersect_key($first->fresh()->payload, array_flip(['artistBios', 'releaseNotes', 'credits', 'labels', 'discogsMasterId', 'discogsLabelId', 'discogsTextLinks']))])
         ->and($second->fresh()->shared_note)->toBe('A gift')
         ->and($second->fresh()->private_note)->toBe('Cost €20')
         ->and($second->fresh()->added_at->equalTo($second->added_at))->toBeTrue()
@@ -280,6 +281,36 @@ it('backfills release information for every copy and resumes without replacing p
     $this->artisan('records:import-discogs-info')->expectsOutput('Imported information for 0 releases.')->assertSuccessful();
     expect(Http::recorded(fn (Request $request) => str_contains($request->url(), '/purge-edge-cache')))->toHaveCount(2);
     $this->assertDatabaseCount('collection_records', 4);
+});
+
+it('backfills names in numeric Discogs references on previously imported releases and leaves missing references usable', function () {
+    $record = socialRecord(socialUser('textlinks', 'everyone'), releaseId: 201);
+    $record->release->update(['info_imported_at' => now()]);
+    $notes = 'A2. track 1 from [r=35332762]. Also [r35332762], [a=77], [l77] and [r404].';
+    Http::fake([
+        'api.discogs.com/releases/201' => Http::response([
+            'notes' => $notes,
+            'artists' => [['id' => 1, 'name' => 'Main artist']],
+        ]),
+        'api.discogs.com/artists/1' => Http::response(['name' => 'Main artist', 'profile' => 'Works with [a77]. See [r=35332762].']),
+        'api.discogs.com/releases/35332762' => Http::response(['title' => 'A Real Album']),
+        'api.discogs.com/artists/77' => Http::response(['name' => 'Another Artist']),
+        'api.discogs.com/labels/77' => Http::response(['name' => 'A Record Label']),
+        'api.discogs.com/releases/404' => Http::response([], 404),
+    ]);
+
+    $this->artisan('records:import-discogs-info')->assertSuccessful();
+
+    expect($record->fresh()->payload['discogsTextLinks'])->toBe([
+        'r35332762' => 'A Real Album', 'a77' => 'Another Artist', 'l77' => 'A Record Label', 'r404' => '',
+    ])->and($record->fresh()->payload['releaseNotes'])->toBe($notes);
+
+    $this->get($record->url(false))->assertInertia(fn (Assert $page) => $page
+        ->where('recordOverlay.record.payload.discogsTextLinks.r35332762', 'A Real Album')
+        ->where('recordOverlay.record.payload.discogsTextLinks.a77', 'Another Artist')
+        ->where('recordOverlay.record.payload.discogsTextLinks.l77', 'A Record Label'));
+
+    $this->artisan('records:import-discogs-info')->expectsOutput('Imported information for 0 releases.')->assertSuccessful();
 });
 
 function configureEdgeCachePurging(): void

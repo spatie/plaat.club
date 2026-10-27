@@ -34,6 +34,7 @@ class DiscogsResponse extends Model
             'releases' => ['id', 'title', 'year', 'released', 'artists', 'labels', 'master_id', 'notes', 'extraartists', 'tracklist'],
             'masters' => ['id', 'year'],
             'artists' => ['id', 'name', 'profile'],
+            'labels' => ['id', 'name'],
             default => array_keys($response),
         });
     }

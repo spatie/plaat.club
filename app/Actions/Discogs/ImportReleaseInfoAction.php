@@ -19,6 +19,7 @@ class ImportReleaseInfoAction
     {
         $release = $this->discogs->get("releases/{$releaseId}");
         $info = $this->mapper->releaseInfo($release, $this->discogs->artistBios($release['artists'] ?? []));
+        $info['discogsTextLinks'] = $this->discogs->textLinks($info);
 
         return $this->storeRelease->execute($releaseId, $info, replace: true);
     }

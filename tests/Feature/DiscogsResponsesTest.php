@@ -42,6 +42,7 @@ it('shares stored public responses across collectors and anonymous requests inde
         ],
         'masters' => ['id' => 123, 'year' => 1981],
         'artists' => ['id' => 123, 'name' => 'Björk', 'profile' => "Biography\0é"],
+        'labels' => ['id' => 123, 'name' => 'Text Records'],
     };
     $payload = [...$expected, 'images' => [['uri' => 'https://example.test/cover.jpg']], 'videos' => [['title' => 'Unused video']]];
     Http::fake(['api.discogs.com/*' => Http::response($payload)]);
@@ -59,7 +60,7 @@ it('shares stored public responses across collectors and anonymous requests inde
         ->and($stored->expires_at->equalTo(now()->addWeek()))->toBeTrue();
     Http::assertSentCount(1);
     Http::assertSent(fn (Request $request) => str_starts_with($request->header('Authorization')[0], 'OAuth '));
-})->with(['releases', 'masters', 'artists']);
+})->with(['releases', 'masters', 'artists', 'labels']);
 
 it('keeps resource types with the same Discogs ID separate', function () {
     $responses = ['releases' => ['title' => 'Release'], 'masters' => ['year' => 1981], 'artists' => ['name' => 'Artist']];

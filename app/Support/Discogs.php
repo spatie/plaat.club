@@ -28,7 +28,7 @@ class Discogs
             return $this->fetch($path, $query);
         }
 
-        if (! preg_match('#^(releases|masters|artists)/([0-9]+)$#', $path, $matches)) {
+        if (! preg_match('#^(releases|masters|artists|labels)/([0-9]+)$#', $path, $matches)) {
             return $this->fetch($path, $query);
         }
 
@@ -88,6 +88,41 @@ class Discogs
         }
 
         return array_values($bios);
+    }
+
+    /**
+     * @param  array<string, mixed>  $info
+     * @return array<string, string>
+     */
+    public function textLinks(array $info): array
+    {
+        $texts = [$info['releaseNotes'] ?? '', ...array_column($info['artistBios'] ?? [], 'profile')];
+        preg_match_all('/\[([arl])=?([0-9]+)\]/i', implode("\n", $texts), $matches, PREG_SET_ORDER);
+        $links = [];
+
+        foreach ($matches as $match) {
+            $type = strtolower($match[1]);
+            $id = (int) $match[2];
+            $key = "{$type}{$id}";
+            if (array_key_exists($key, $links)) {
+                continue;
+            }
+
+            $resource = ['a' => 'artists', 'r' => 'releases', 'l' => 'labels'][$type];
+            try {
+                $details = $this->get("{$resource}/{$id}");
+            } catch (RequestException $exception) {
+                if ($exception->response->status() !== 404) {
+                    throw $exception;
+                }
+
+                $details = [];
+            }
+
+            $links[$key] = $type === 'r' ? ($details['title'] ?? '') : ($details['name'] ?? '');
+        }
+
+        return $links;
     }
 
     /**

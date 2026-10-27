@@ -176,6 +176,7 @@ class RecordCollection
             'artistBios',
             'releaseNotes',
             'credits',
+            'discogsTextLinks',
             'catalogNumber',
             'coverSource',
             'discogsUrl',

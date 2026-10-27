@@ -35,7 +35,10 @@ export function RecordLinerNotes({ record }: { record: CollectionRecord }) {
                         <ChevronDown size={18} aria-hidden="true" />
                     </summary>
                     <div className="record-disclosure-content">
-                        <DiscogsParagraphs text={notes} />
+                        <DiscogsParagraphs
+                            text={notes}
+                            links={record.discogsTextLinks}
+                        />
                     </div>
                 </details>
             )}
@@ -63,7 +66,10 @@ export function RecordLinerNotes({ record }: { record: CollectionRecord }) {
                                         {bio.name}
                                     </a>
                                 </h3>
-                                <DiscogsParagraphs text={bio.profile} />
+                                <DiscogsParagraphs
+                                    text={bio.profile}
+                                    links={record.discogsTextLinks}
+                                />
                             </section>
                         ))}
                     </div>

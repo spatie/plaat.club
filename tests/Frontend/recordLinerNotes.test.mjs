@@ -196,6 +196,55 @@ await test('Discogs markup uses fixed safe links and unknown or malformed markup
     );
 });
 
+await test('numeric references show resolved names in notes and biographies without changing targets or trusting HTML', () => {
+    const html = renderNotes({
+        releaseNotes:
+            '[r=35332762] [r35332762] [a=77] [l77] [r404] [a=Named Artist]',
+        artistBios: [
+            {
+                id: 1,
+                name: 'Main artist',
+                profile: 'See [r=35332762] and [a77].',
+            },
+        ],
+        discogsTextLinks: {
+            r35332762: 'A Real Album',
+            a77: 'Another Artist',
+            l77: '<b>A Record Label</b>',
+            r404: '',
+        },
+    });
+
+    assert.equal(
+        (
+            html.match(
+                /href="https:\/\/www.discogs.com\/release\/35332762"[^>]*>A Real Album<\/a>/g,
+            ) ?? []
+        ).length,
+        3,
+    );
+    assert.equal(
+        (
+            html.match(
+                /href="https:\/\/www.discogs.com\/artist\/77"[^>]*>Another Artist<\/a>/g,
+            ) ?? []
+        ).length,
+        2,
+    );
+    assert.match(
+        html,
+        /href="https:\/\/www.discogs.com\/label\/77"[^>]*>&lt;b&gt;A Record Label&lt;\/b&gt;<\/a>/,
+    );
+    assert.match(
+        html,
+        /href="https:\/\/www.discogs.com\/release\/404"[^>]*>Release 404<\/a>/,
+    );
+    assert.match(
+        html,
+        /type=artist&amp;q=Named%20Artist[^>]*>Named Artist<\/a>/,
+    );
+});
+
 await test('Bandcamp is only shown for a confirmed direct link, never a search fallback', () => {
     const directUrl = 'https://artist.bandcamp.com/album/shebang';
     const html = renderDetails({

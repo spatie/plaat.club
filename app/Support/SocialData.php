@@ -31,7 +31,7 @@ class SocialData
             'year', 'originalYear', 'originalReleaseDate', 'pressingReleaseDate', 'addedAt',
             'label', 'catalogNumber', 'format', 'mediaFormats', 'genres', 'styles', 'cover',
             'discogsUrl', 'appleMusicUrl', 'appleMusicSearch', 'spotifyUrl', 'spotifySearch', 'trackSource',
-            'bandcampUrl', 'bandcampSearch', 'artistBios', 'releaseNotes', 'credits',
+            'bandcampUrl', 'bandcampSearch', 'artistBios', 'releaseNotes', 'credits', 'discogsTextLinks',
         ]);
         if (filled($payload['cover'] ?? null) && $payload['cover'] !== '/images/record-placeholder.svg') {
             $payload['cover'] = route('shelf.cover', $record, false);

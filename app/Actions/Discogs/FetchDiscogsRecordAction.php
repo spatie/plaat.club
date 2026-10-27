@@ -39,6 +39,9 @@ class FetchDiscogsRecordAction
             File::put(storage_path("app/discogs/releases-{$basic['id']}.json"), json_encode($release, JSON_THROW_ON_ERROR));
         }
 
-        return $this->mapper->record($entry, $release, $master, $discogs->artistBios($release['artists'] ?? $basic['artists']));
+        $record = $this->mapper->record($entry, $release, $master, $discogs->artistBios($release['artists'] ?? $basic['artists']));
+        $record['discogsTextLinks'] = $discogs->textLinks($record);
+
+        return $record;
     }
 }

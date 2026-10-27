@@ -32,7 +32,7 @@ class Release extends Model
         'trackSource' => 'track_source', 'releaseNotes' => 'release_notes',
     ];
 
-    public const JSON_FIELDS = ['artists', 'labels', 'mediaFormats', 'genres', 'styles', 'tracks', 'credits'];
+    public const JSON_FIELDS = ['artists', 'labels', 'mediaFormats', 'genres', 'styles', 'tracks', 'credits', 'discogsTextLinks'];
 
     public $incrementing = false;
 
