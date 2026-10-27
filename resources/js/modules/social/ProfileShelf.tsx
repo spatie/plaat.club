@@ -212,7 +212,11 @@ export function ProfileShelf({
                         }}
                         loading={
                             <p className="collection-loading" role="status">
-                                More records coming in…
+                                <span
+                                    className="collection-loading-record"
+                                    aria-hidden="true"
+                                />
+                                <span>More records coming in…</span>
                             </p>
                         }
                     >

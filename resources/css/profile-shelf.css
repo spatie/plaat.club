@@ -207,8 +207,44 @@
         outline: none;
     }
     .collection-loading {
-        padding: 20px 25px;
-        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin: 0;
+        padding: 32px 18px 40px;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+    }
+    .collection-loading::before,
+    .collection-loading::after {
+        content: '';
+        flex: 1;
+        max-width: 72px;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.25;
+    }
+    .collection-loading-record {
+        display: grid;
+        place-items: center;
+        flex: 0 0 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: repeating-radial-gradient(
+            circle,
+            var(--ink) 0 2px,
+            color-mix(in srgb, var(--ink) 80%, var(--paper)) 2px 3px
+        );
+    }
+    .collection-loading-record::before {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border: 4px solid var(--paper);
+        border-radius: 50%;
+        background: var(--ink);
     }
     .collection-heading {
         padding: 12px 25px 0;
