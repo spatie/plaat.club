@@ -1,8 +1,8 @@
 # Plaat Club
 
-[![tests](https://github.com/spatie/plaat.club/actions/workflows/tests.yml/badge.svg)](https://github.com/spatie/plaat.club/actions/workflows/tests.yml)
+[![tests](https://github.com/spatie/plaatclub.com/actions/workflows/tests.yml/badge.svg)](https://github.com/spatie/plaatclub.com/actions/workflows/tests.yml)
 
-The source of [Plaat Club](https://plaat.club), a home for your vinyl, CDs and cassettes. Connect your Discogs collection, share your shelves, and discover what your friends are adding. Pull out a release, read its notes, and jump to any track on Spotify or Apple Music.
+The source of [Plaat Club](https://plaatclub.com), a home for your vinyl, CDs and cassettes. Connect your Discogs collection, share your shelves, and discover what your friends are adding. Pull out a release, read its notes, and jump to any track on Spotify or Apple Music.
 
 The site started with [Freek’s Discogs collection](https://www.discogs.com/user/freekmurze/collection), which still sits on its original walnut shelves at `/collection`. Its existing record URLs and generated social preview images remain available.
 
@@ -39,8 +39,8 @@ Happy browsing!
 ## Running it locally
 
 ```bash
-git clone https://github.com/spatie/plaat.club.git
-cd plaat.club
+git clone https://github.com/spatie/plaatclub.com.git
+cd plaatclub.com
 composer setup
 composer dev
 ```
@@ -372,6 +372,17 @@ Plaat Club targets [Laravel Cloud](https://cloud.laravel.com). Creating its Clou
 does not deploy this feature branch or migrate the original site. Configure deployment
 and the production domain explicitly when the app is ready to launch.
 
+The canonical production origin is `https://plaatclub.com`. Keep `plaat.club` and its
+HTTPS certificate active: requests to the old domain and either `www` hostname permanently
+redirect to the new origin with their path, query string and HTTP method preserved.
+Previously issued signed verification and friend-request links remain valid on the new
+HTTPS origin until their original expiry; altered or expired links still fail validation.
+Users must sign in again because cookies cannot transfer between the two domains.
+Use `APP_URL=https://plaatclub.com` and `GOOGLE_REDIRECT_URI=https://plaatclub.com/auth/google/callback`
+in production, and register that callback with Google before switching. Discogs receives
+`https://plaatclub.com/discogs/callback` when starting new authorizations. Preserve the
+database, `APP_KEY`, OAuth credentials and attached storage when renaming the existing app.
+
 Production needs HTTPS, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, a working mail
 transport, the queue worker, the scheduler (`schedule:run` every minute), and Discogs OAuth
 secrets. Run `php artisan queue:restart` after deployments. The social preview does not
@@ -555,11 +566,13 @@ Before deploying the cache-removal migrations:
 ### Outgoing email
 
 Production uses Postmark with `MAIL_MAILER=postmark`, `POSTMARK_API_KEY` set to the
-Postmark Server API Token, `MAIL_FROM_ADDRESS=hello@plaat.club`, and
+Postmark Server API Token, `MAIL_FROM_ADDRESS=hello@plaatclub.com`, and
 `MAIL_FROM_NAME="Plaat Club"`. Set these as custom variables in Laravel Cloud, then
 deploy the commit containing the Postmark transport dependencies. Custom variables
 override the attached Resend integration's injected mail settings. Keep Resend attached
 until delivery through Postmark has been checked. Local previews continue using Mailpit.
+Verify `plaatclub.com` in Postmark and publish its DKIM and custom Return-Path DNS records
+before changing the sender. Keep old-domain mail authentication records during the transition.
 
 ## License
 

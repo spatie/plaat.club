@@ -23,6 +23,7 @@ use App\Http\Controllers\UserListsController;
 use App\Http\Middleware\EnsureCollectionAccess;
 use App\Http\Middleware\PrivateResponse;
 use App\Http\Middleware\RequireVerifiedAccount;
+use App\Http\Middleware\ValidateMigratedSignature;
 use App\Support\SocialData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -59,7 +60,7 @@ Route::middleware([PrivateResponse::class, RequireVerifiedAccount::class, Ensure
 
     Route::match(['get', 'post'], '/friends/respond/{friendship}/{recipient}/{action}', FriendRequestResponseController::class)
         ->whereUuid(['friendship', 'recipient'])->whereIn('action', ['accept', 'decline'])
-        ->middleware(['signed', 'throttle:30,1'])->name('friendRequest.respond');
+        ->middleware([ValidateMigratedSignature::class, 'throttle:30,1'])->name('friendRequest.respond');
 
     Route::middleware('guest')->group(function () {
         Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('throttle:6,1')->name('google.redirect');
@@ -76,7 +77,7 @@ Route::middleware([PrivateResponse::class, RequireVerifiedAccount::class, Ensure
     Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/logout', [AccountController::class, 'logout'])->name('logout');
         Route::get('/verify-email', fn () => Inertia::render('social/AuthPage', ['mode' => 'verify', 'artwork' => SocialData::publicArtwork(limit: 12)]))->name('verification.notice');
-        Route::get('/verify-email/{id}/{hash}', [AccountController::class, 'verify'])->whereUuid('id')->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+        Route::get('/verify-email/{id}/{hash}', [AccountController::class, 'verify'])->whereUuid('id')->middleware([ValidateMigratedSignature::class, 'throttle:6,1'])->name('verification.verify');
         Route::post('/email/verification-notification', [AccountController::class, 'resend'])->middleware('throttle:6,1')->name('verification.send');
 
         Route::middleware('verified')->group(function () {

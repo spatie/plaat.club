@@ -1,6 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "plaat.club",
+    "name": "plaatclub.com",
     "private": true,
     "type": "module",
     "scripts": {

@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "spatie/plaat.club",
+    "name": "spatie/plaatclub.com",
     "type": "project",
     "description": "Plaat Club, a listening circle for record collectors.",
     "keywords": ["laravel", "framework"],

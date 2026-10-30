@@ -39,7 +39,7 @@ return [
         'token' => env('DISCOGS_TOKEN'),
         'consumer_key' => env('DISCOGS_CONSUMER_KEY'),
         'consumer_secret' => env('DISCOGS_CONSUMER_SECRET'),
-        'user_agent' => 'Plaat Club/1.0 (https://plaat.club)',
+        'user_agent' => 'Plaat Club/1.0 (https://plaatclub.com)',
     ],
 
     'laravel_cloud' => [
@@ -48,7 +48,7 @@ return [
     ],
 
     'musicbrainz' => [
-        'user_agent' => 'Plaat Club/1.0 (https://plaat.club)',
+        'user_agent' => 'Plaat Club/1.0 (https://plaatclub.com)',
     ],
 
     'postmark' => [
