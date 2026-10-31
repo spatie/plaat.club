@@ -56,10 +56,80 @@
     .list-description {
         white-space: pre-line;
     }
+    .list-share-status {
+        margin: 12px 0 0;
+    }
+    .list-share-status:empty {
+        margin: 0;
+    }
+    .list-share-link {
+        display: grid;
+        gap: 8px;
+        max-width: 560px;
+        margin-top: 12px;
+    }
     .lists-section-heading {
         gap: 20px;
         flex-wrap: wrap;
         margin-bottom: 24px;
+    }
+    .featured-lists {
+        margin-bottom: 40px;
+    }
+    :scope.home-page .featured-lists {
+        padding: 64px 4.5vw 72px;
+        margin: 0;
+        background: var(--cream);
+    }
+    :scope.explore-page .page-heading:has(+ .featured-lists) {
+        padding-bottom: 0;
+    }
+    :scope.explore-page .featured-lists-heading h2 {
+        font-size: 42px;
+    }
+    .featured-lists-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px 32px;
+    }
+    .featured-lists-heading h2 {
+        font-size: clamp(42px, 5vw, 64px);
+        line-height: 1;
+        margin: 8px 0 16px;
+    }
+    .featured-lists-heading p {
+        max-width: 58ch;
+        margin: 0;
+    }
+    .featured-lists-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        white-space: nowrap;
+    }
+    .featured-lists .collection-previews {
+        gap: 24px;
+        padding-top: 28px;
+    }
+    .featured-lists .collection-preview:nth-child(even) {
+        transform: none;
+    }
+    .featured-lists .collection-preview-covers {
+        min-height: 0;
+        padding: 16px 15px 32px;
+    }
+    .featured-lists .collection-preview-covers > a {
+        max-width: 96px;
+    }
+    .featured-lists .collection-preview-caption h3 {
+        font-size: clamp(30px, 3vw, 40px);
+        margin-top: 0;
+    }
+    .featured-lists .list-card-description {
+        -webkit-line-clamp: 2;
     }
     .list-create-dialog {
         position: fixed;

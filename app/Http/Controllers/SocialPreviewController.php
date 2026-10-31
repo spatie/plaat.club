@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\CollectionRecord;
+use App\Models\RecordList;
+use App\Models\RecordListEntry;
 use App\Models\User;
 use App\Support\RecordShareImage;
 use App\Support\SocialPreview;
@@ -37,6 +39,17 @@ class SocialPreviewController extends Controller
         $fields = Arr::only($record->payload, ['cover', 'artist', 'displayTitle', 'originalYear']);
 
         return $this->image(['record', SocialPreview::RECORD_IMAGE_VERSION, $fields], fn () => $image->render($fields));
+    }
+
+    public function list(RecordList $recordList, RecordShareImage $image): Response
+    {
+        abort_unless($recordList->canView(null), 404);
+
+        $records = array_values($recordList->entries()->whereNotNull('release_id')->with('release')->limit(5)->get()
+            ->map(fn (RecordListEntry $entry) => ['cover' => $entry->release->cover ?? ''])->all());
+        $title = $recordList->name;
+
+        return $this->image(['list', $title, $records], fn () => $image->renderClub($title, '', $records));
     }
 
     /**

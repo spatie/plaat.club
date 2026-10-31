@@ -40,6 +40,7 @@ class HomeController
     {
         return Inertia::render('social/HomePage', [
             'artwork' => SocialData::publicArtwork(),
+            'featuredLists' => $this->featuredLists(),
         ]);
     }
 
@@ -51,6 +52,7 @@ class HomeController
             return Inertia::render('social/CollectionsPage', [
                 'tab' => 'lists',
                 'lists' => SocialData::pagination($lists, $lists->getCollection()->map(SocialData::listPreview(...))->all()),
+                'featuredLists' => $this->featuredLists(),
             ]);
         }
 
@@ -59,6 +61,7 @@ class HomeController
         return Inertia::render('social/CollectionsPage', [
             'tab' => 'collections',
             'collectors' => SocialData::pagination($collectors, $collectors->getCollection()->map(SocialData::collector(...))->all()),
+            'featuredLists' => $this->featuredLists(),
         ]);
     }
 
@@ -86,6 +89,16 @@ class HomeController
         return Inertia::render('social/WeeklyEmailPage', [
             'emailHtml' => (new FriendsWeeklyDigest($records))->with('webPreview', true)->render(),
         ]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    protected function featuredLists(): array
+    {
+        $ids = ['7dd4b401-53f4-4c32-a2c3-e9af74b7480f', '52249783-9141-44ba-a9c2-879ed0077c4a'];
+
+        return array_values(RecordList::previews(null)->whereIn('public_id', $ids)->get()
+            ->sortBy(fn (RecordList $list) => array_search($list->public_id, $ids, true))
+            ->map(SocialData::listPreview(...))->all());
     }
 
     /** @return Builder<User> */

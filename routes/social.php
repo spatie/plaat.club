@@ -55,6 +55,7 @@ Route::middleware([PrivateResponse::class, RequireVerifiedAccount::class, Ensure
     Route::middleware('throttle:shareImages')->group(function () {
         Route::get('share/collections/{user:handle}.jpg', [SocialPreviewController::class, 'collection'])->name('socialPreview.collection');
         Route::get('share/shelves/{record}.jpg', [SocialPreviewController::class, 'record'])->whereUuid('record')->name('socialPreview.record');
+        Route::get('share/lists/{recordList}.jpg', [SocialPreviewController::class, 'list'])->whereUuid('recordList')->name('socialPreview.list');
     });
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('throttle:20,1')->name('google.callback');
 

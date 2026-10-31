@@ -2,6 +2,7 @@
 
 use App\Actions\Collections\StoreCollectionRecordAction;
 use App\Models\Friendship;
+use App\Models\RecordList;
 use App\Models\User;
 use App\Support\RecordCollection;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,44 @@ it('welcomes visitors with linked public artwork and private response headers', 
         ->and($response->headers->get('Cache-Control'))->toContain('private', 'no-store')
         ->and($response->headers->get('Cache-Control'))->not->toContain('s-maxage', 'public');
 });
+
+it('features hand-picked public lists in editorial order and respects privacy immediately', function (string $path) {
+    $owner = socialUser('featured_curator');
+    $first = RecordList::query()->create([
+        'user_id' => $owner->id, 'public_id' => '7dd4b401-53f4-4c32-a2c3-e9af74b7480f',
+        'name' => 'Thom Yorke’s Desert Island Discs', 'description' => 'From the BBC programme.', 'visibility' => 'everyone',
+    ]);
+    $second = RecordList::query()->create([
+        'user_id' => $owner->id, 'public_id' => '52249783-9141-44ba-a9c2-879ed0077c4a',
+        'name' => 'Nick Cave’s Desert Island Discs', 'visibility' => 'everyone',
+    ]);
+    $copy = socialRecord($owner, 'A selected release');
+    $first->entries()->create(['release_id' => $copy->discogs_release_id, 'position' => 0, 'private_note' => 'Not for discovery']);
+    RecordList::query()->create(['user_id' => $owner->id, 'name' => 'An ordinary public list', 'visibility' => 'everyone']);
+
+    $this->get($path)->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->has('featuredLists', 2)
+        ->where('featuredLists.0.publicId', $first->public_id)
+        ->where('featuredLists.0.description', 'From the BBC programme.')
+        ->where('featuredLists.0.count', 1)
+        ->where('featuredLists.0.covers.0', route('lists.entries.cover', [$first, $first->entries()->first()], false))
+        ->where('featuredLists.1.publicId', $second->public_id))
+        ->assertDontSee('Not for discovery');
+
+    foreach (['friends', 'only_me'] as $visibility) {
+        $first->update(['visibility' => $visibility]);
+        $this->get($path)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('featuredLists', 1)->where('featuredLists.0.publicId', $second->public_id));
+    }
+    $second->delete();
+    $this->get($path)->assertOk()->assertInertia(fn (Assert $page) => $page->has('featuredLists', 0));
+
+    $viewer = socialUser('featured_friend');
+    socialFriends($owner, $viewer);
+    $first->update(['visibility' => 'friends']);
+    $this->actingAs($viewer)->get('/collections')->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('featuredLists', 0));
+})->with(['/', '/collections', '/collections?tab=lists']);
 
 it('uses only live public records for linked artwork and never falls back to the bundled snapshot', function (string $path) {
     $friendsOwner = socialUser('friendsonly', 'friends');

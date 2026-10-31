@@ -69,10 +69,14 @@ export type Collector = Person & {
 };
 
 export type RecordArtwork = { cover: string; title: string; url: string };
-export type HomeProps = { artwork: RecordArtwork[] };
-export type CollectionsProps =
+export type HomeProps = {
+    artwork: RecordArtwork[];
+    featuredLists: ListPreview[];
+};
+export type CollectionsProps = { featuredLists: ListPreview[] } & (
     | { tab: 'collections'; collectors: Pagination<Collector> }
-    | { tab: 'lists'; lists: Pagination<ListPreview> };
+    | { tab: 'lists'; lists: Pagination<ListPreview> }
+);
 export type AuthProps = {
     artwork: RecordArtwork[];
     mode: 'login' | 'register' | 'forgot' | 'reset' | 'verify';

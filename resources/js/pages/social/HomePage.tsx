@@ -1,9 +1,10 @@
 import { Head } from '@inertiajs/react';
 
+import { FeaturedLists } from '@/modules/lists/FeaturedLists';
 import { HeroArtwork } from '@/modules/social/HeroArtwork';
 import type { HomeProps } from '@/modules/social/types';
 
-export function HomePage({ artwork }: HomeProps) {
+export function HomePage({ artwork, featuredLists }: HomeProps) {
     return (
         <>
             <Head title="Good taste is contagious." />
@@ -32,6 +33,7 @@ export function HomePage({ artwork }: HomeProps) {
                     </span>
                 </p>
             </section>
+            <FeaturedLists heading="Go record digging." lists={featuredLists} />
             <footer className="landing-attribution">
                 Record data provided by{' '}
                 <a href="https://www.discogs.com">Discogs</a>.

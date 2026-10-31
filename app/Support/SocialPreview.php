@@ -32,6 +32,8 @@ class SocialPreview
                 'title' => "{$list->name} · {$list->user->name}",
                 'description' => $list->description ?: "A selection of records by {$list->user->name} on Plaat Club.",
                 'url' => route('lists.show', $list),
+                'image' => route('socialPreview.list', $list),
+                'imageAlt' => "Record sleeves from {$list->name}, a list by {$list->user->name} on Plaat Club",
             ]);
         }
 

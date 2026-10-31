@@ -61,10 +61,12 @@ class RecordShareImage
             }
             imagefilledellipse($image, 969, 421, 98, 98, $red);
             imagefilledellipse($image, 969, 421, 10, 10, $cream);
-            foreach ($this->wrap($subtitle, public_path('fonts/instrument-serif-italic.ttf'), 58, 720, 2) as $index => $line) {
-                imagettftext($image, 58, 0, 54, 390 + $index * 72, $ink, public_path('fonts/instrument-serif-italic.ttf'), $line);
+            if ($subtitle !== '') {
+                foreach ($this->wrap($subtitle, public_path('fonts/instrument-serif-italic.ttf'), 58, 720, 2) as $index => $line) {
+                    imagettftext($image, 58, 0, 54, 390 + $index * 72, $ink, public_path('fonts/instrument-serif-italic.ttf'), $line);
+                }
+                imagettftext($image, 21, 0, 54, 578, $ink, $body, 'A listening circle for record collectors.');
             }
-            imagettftext($image, 21, 0, 54, 578, $ink, $body, 'A listening circle for record collectors.');
 
             return $this->toJpeg($image);
         }
@@ -78,7 +80,9 @@ class RecordShareImage
                 imagecopyresampled($image, $cover, $left, 342, 0, 0, 200, 200, imagesx($cover), imagesy($cover));
             }
         }
-        imagettftext($image, 23, 0, 54, 597, $ink, $body, $subtitle);
+        if ($subtitle !== '') {
+            imagettftext($image, 23, 0, 54, 597, $ink, $body, $subtitle);
+        }
 
         return $this->toJpeg($image);
     }

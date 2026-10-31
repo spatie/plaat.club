@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { Share2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ListRecordCard } from '@/modules/lists/ListRecordCard';
@@ -10,6 +11,25 @@ import '../../../css/record-lists.css';
 export function ListPage({ list, records }: ListProps) {
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [shareStatus, setShareStatus] = useState<'copied' | 'manual' | null>(
+        null,
+    );
+
+    async function shareList() {
+        setShareStatus(null);
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: list.name, url: list.url });
+                return;
+            }
+            await navigator.clipboard.writeText(list.url);
+            setShareStatus('copied');
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError')
+                return;
+            setShareStatus('manual');
+        }
+    }
 
     return (
         <>
@@ -35,6 +55,15 @@ export function ListPage({ list, records }: ListProps) {
                         {records.length}{' '}
                         {records.length === 1 ? 'record' : 'records'}
                     </span>
+                    {list.visibility !== 'only_me' && (
+                        <button
+                            className="button secondary"
+                            type="button"
+                            onClick={() => void shareList()}
+                        >
+                            <Share2 size={18} aria-hidden="true" /> Share list
+                        </button>
+                    )}
                     {list.canEdit && (
                         <Link
                             className="button secondary"
@@ -44,6 +73,25 @@ export function ListPage({ list, records }: ListProps) {
                         </Link>
                     )}
                 </div>
+                {list.visibility === 'friends' && (
+                    <p className="muted">
+                        Only the list owner’s accepted friends can open this
+                        link.
+                    </p>
+                )}
+                <p role="status" className="list-share-status">
+                    {shareStatus === 'copied' && 'Link copied.'}
+                </p>
+                {shareStatus === 'manual' && (
+                    <label className="list-share-link">
+                        Copy this link to share the list
+                        <input
+                            readOnly
+                            value={list.url}
+                            onFocus={(event) => event.currentTarget.select()}
+                        />
+                    </label>
+                )}
             </div>
             {list.removedCount > 0 && (
                 <p className="notice">

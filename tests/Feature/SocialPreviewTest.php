@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Collections\StoreCollectionRecordAction;
+use App\Models\RecordList;
 use App\Support\RecordShareImage;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -143,4 +144,65 @@ it('keeps mixed-owner copies distinct and refreshes previews when public metadat
 
     app(StoreCollectionRecordAction::class)->execute($first, ['payload' => [...$first->payload, 'displayTitle' => 'Renamed public album']]);
     expect($this->get('/share/shelves/'.$first->public_id.'.jpg')->assertOk()->getContent())->not->toBe($firstImage);
+});
+
+it('shares public lists independently of collection privacy with crawler-visible metadata and artwork', function () {
+    $owner = socialUser('listpreview', 'only_me');
+    $copy = socialRecord($owner, 'Selected album');
+    $list = RecordList::query()->create([
+        'user_id' => $owner->id, 'name' => 'Desert island discs',
+        'description' => 'Eight tracks for a distant shore.', 'visibility' => 'everyone',
+    ]);
+    $list->entries()->create(['release_id' => $copy->discogs_release_id, 'position' => 0, 'private_note' => 'Never publish this note']);
+
+    $response = $this->get(route('lists.show', $list))->assertOk()
+        ->assertSee('property="og:title" content="Desert island discs · Listpreview"', false)
+        ->assertSee('property="og:description" content="Eight tracks for a distant shore."', false)
+        ->assertSee('property="og:image" content="'.route('socialPreview.list', $list).'"', false)
+        ->assertSee('name="twitter:image" content="'.route('socialPreview.list', $list).'"', false)
+        ->assertSee('rel="canonical" href="'.route('lists.show', $list).'"', false);
+    expect(json_encode($response->inertiaProps('socialPreview')))->not->toContain('Never publish this note', $owner->email);
+
+    $image = $this->get(route('socialPreview.list', $list))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+    $dimensions = getimagesizefromstring($image->getContent());
+    expect([$dimensions[0], $dimensions[1]])->toBe([1200, 630])
+        ->and($image->headers->get('Cache-Control'))->toContain('private', 'no-store');
+
+    $list->update(['name' => 'New discoveries']);
+    expect($this->get(route('socialPreview.list', $list))->assertOk()->getContent())->not->toBe($image->getContent());
+    $list->delete();
+    $this->get(route('socialPreview.list', $list))->assertNotFound();
+});
+
+it('never exposes restricted list artwork or metadata even to an authorized owner or friend', function (string $visibility) {
+    $owner = socialUser('restrictedlist');
+    $friend = socialUser('listfriend');
+    socialFriends($owner, $friend);
+    $list = RecordList::query()->create(['user_id' => $owner->id, 'name' => 'Secret selection', 'description' => 'Secret introduction', 'visibility' => 'everyone']);
+    $this->get(route('socialPreview.list', $list))->assertOk();
+
+    $list->update(['visibility' => $visibility]);
+
+    foreach ([$owner, $friend] as $viewer) {
+        $this->actingAs($viewer)->get(route('socialPreview.list', $list))->assertNotFound();
+    }
+    $response = $this->actingAs($owner)->get(route('lists.show', $list))->assertOk();
+    expect($response->inertiaProps('socialPreview.title'))->toBe('Plaat Club')
+        ->and($response->inertiaProps('socialPreview.image'))->toBe(url('/share/site.jpg?v=2'));
+    auth()->forgetGuards();
+    $this->get(route('socialPreview.list', $list))->assertNotFound();
+})->with(['only_me', 'friends']);
+
+it('renders personalized empty list artwork and refreshes it when releases are added or removed', function () {
+    $owner = socialUser('emptylist');
+    $list = RecordList::query()->create(['user_id' => $owner->id, 'name' => str_repeat('Long summer listening ', 5), 'visibility' => 'everyone']);
+    $url = route('socialPreview.list', $list);
+    $empty = $this->get($url)->assertOk()->getContent();
+    expect($empty)->not->toBe(app(RecordShareImage::class)->renderHome());
+    $copy = socialRecord($owner);
+    $entry = $list->entries()->create(['release_id' => $copy->discogs_release_id, 'position' => 0]);
+    $filled = $this->get($url)->assertOk()->getContent();
+    expect($filled)->not->toBe($empty);
+    $entry->delete();
+    expect($this->get($url)->assertOk()->getContent())->toBe($empty);
 });

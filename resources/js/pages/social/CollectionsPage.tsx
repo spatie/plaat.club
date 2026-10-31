@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 
+import { FeaturedLists } from '@/modules/lists/FeaturedLists';
 import { RecordListPreview } from '@/modules/lists/RecordListPreview';
 import { CollectionPreview } from '@/modules/social/CollectionPreview';
 import { Pagination } from '@/modules/social/Pagination';
@@ -14,6 +15,10 @@ export function CollectionsPage(props: CollectionsProps) {
                 <h1>Explore.</h1>
                 <p>Collections and lists shared with everyone.</p>
             </div>
+            <FeaturedLists
+                heading="Featured lists."
+                lists={props.featuredLists}
+            />
             <nav className="collection-tabs explore-tabs" aria-label="Explore">
                 <Link
                     href="/collections"
